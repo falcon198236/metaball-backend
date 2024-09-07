@@ -1,0 +1,21 @@
+{
+  "name": "express-mongo-example",
+  "version": "1.0.0",
+  "description": "A sample node application",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --max_old_space_size=8000 ./bins/www.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "soham kamani",
+  "license": "ISC",
+  "dependencies": {
+    "@hapi/joi": "^15.0.3",
+    "body-parser": "^1.19.0",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.5",
+    "express": "^4.17.1",
+    "mongoose": "^8.6.1",
+    "uuid": "^10.0.0"
+  }
+}
