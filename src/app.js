@@ -21,14 +21,13 @@ app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
 
 app.get('/hello', (req, res) => {
-  res.send('Metaball API Cool!');
+  res.send(`Metaball API Cool!: Project= '${process.env.PROJECT}'`);
 });
-app.use('/app', appRouter);
+app.use('/', appRouter);
 app.use('/admin', adminRouter);
 
 process.on('uncaughtException', (err) => {
   console.log('uncaughtException', err);
-  Sentry.captureException(err);
 });
 
 const logIncomingRequest = (req) => {

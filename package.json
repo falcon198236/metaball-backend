@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node --max_old_space_size=8000 ./bins/www.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon ./bins/www.js"
   },
   "author": "soham kamani",
   "license": "ISC",
@@ -13,9 +13,33 @@
     "@hapi/joi": "^15.0.3",
     "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.6",
+    "crypto": "^1.0.1",
     "dotenv": "^16.4.5",
     "express": "^4.17.1",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.6.1",
     "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.29.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-prettier": "^4.2.1",
+    "husky": "^8.0.3",
+    "jest": "^29.3.1",
+    "lint-staged": "^13.1.0",
+    "nodemon": "^2.0.20",
+    "prettier": "^2.8.1"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "jest": {
+    "testEnvironment": "node"
   }
 }

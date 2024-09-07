@@ -8,20 +8,17 @@ const { DB_PORT } = require('./configs/database');
  * Connect Monogo Database.
  */
 
-const appdb = mongoose.createConnection(
-  DB_PORT,
-  {
+/**
+ * Connect Monogo Database.
+ */
+mongoose.set('strictQuery', false);
+mongoose
+  .connect(DB_PORT, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-  },
-  (err) => {
-    if (err) {
-      console.log('app db err', err);
-    } else {
-      console.log('app db connected');
-    }
-  }
-);
+  })
+  .then(() => {
+    console.log('Connecting to database successful');
+  })
+  .catch((err) => console.error('Could not connect to mongo DB', err));
 
-
-module.exports = { appdb };
