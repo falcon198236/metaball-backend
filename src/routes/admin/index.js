@@ -1,8 +1,10 @@
 const express = require('express');
-//const user = require('./user');
+const admin = require('./admin');
+const access = require('./access');
 
 const router = express.Router();
 // App api
-// router.use('/user', user);
+router.use('/', admin);
+router.use('/access', access);
 
 module.exports = router;

@@ -2,12 +2,12 @@ const mongoose = require('mongoose');
 const { appdb } = require('../db');
 
 const Schema = mongoose.Schema;
-const system_settings = require('../configs/system_settings');
 
 const UserSchema = new Schema(
   {
     fullname: String,
     nickname: String,
+
     email: {
       type: String,
       required: true,
@@ -16,7 +16,19 @@ const UserSchema = new Schema(
     hash: String,
     salt: String,
     phone: String,
+    icon: String,
+    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    followered: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    experience_years: {
+      type: Number,
+      default: 0,
+    },
+    best_score: {
+      type: Number,
+      default: 0,
+    },
     last_login_at: Date, 
+    role: {type: Number, default: 2},
     deleted: {type: Boolean, default: false},
   },
   {
