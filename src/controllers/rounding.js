@@ -1,12 +1,10 @@
-const Access = require('../models/access');
+const Rounding = require('../models/rounding');
 
 const create = async(req, res) => {
-    const { currentUser } = req;
-    req.body.user = currentUser._id;
-    const follow = new Access({
+    const rounding = new Rounding({
         ... req.body,
     });
-    const result = await follow.save().catch(err => {
+    const result = await Rounding.save().catch(err => {
         return res.status(400).send({
             status: false,
             error: err.message,
@@ -17,8 +15,7 @@ const create = async(req, res) => {
 
 const update = async(req, res) => {
     const {_id, data} = req.body;
-    req.body.user = currentUser._id;
-    const result = await Access.updateOne({_id}, {$set: data}).catch((err) => {
+    const result = await Rounding.updateOne({_id}, {$set: data}).catch((err) => {
         return res.status(400).send({
             status: false,
             error: err.message,
@@ -29,11 +26,11 @@ const update = async(req, res) => {
 
 const gets = async (req, res) => {
     const { key, limit, skip } = req.query;
-    const query = [{created_at: {$gte: new Date('2000-1-1')}}];
+    const query = [{createdAt: new Date('2000-1-1')}];
     if (key)
-        query.push({email: {$regex: `${key}.*`, $options:'i' }});
-    const count = await Access.countDocuments({$and:query});
-    const data = await Access.aggregate([
+        query.push({title: {$regex: `${key}.*`, $options:'i' }});
+    const count = await Rounding.countDocuments({$and:query});
+    const data = await Rounding.aggregate([
         {
             $match: {$and: query},
         },
@@ -49,10 +46,8 @@ const gets = async (req, res) => {
 };
 
 const remove = async (req, res) => {
-    const {currentUser} = req;
     const { _id } = req.params;
-    
-    const result = await Access.deleteOne({_id}).catch(err => {
+    const result = await Rounding.deleteOne({_id}).catch(err => {
         return res.status(400).send({
             status: false,
             error: err.message,
@@ -64,7 +59,7 @@ const remove = async (req, res) => {
 const removes = async (req, res) => {
     const { _ids } = req.body;
     
-    const result = await Access.deleteMany({_id: {$in: _ids}}).catch(err => {
+    const result = await Rounding.deleteMany({_id: {$in: _ids}}).catch(err => {
         return res.status(400).send({
             status: false,
             error: err.message,
@@ -75,18 +70,43 @@ const removes = async (req, res) => {
 
 const get = async (req, res) => {
     const { _id } = req.params;
-    const data = await Access.findOne({_id}).catch(err => console.log(err.message));
+    const data = await Rounding.findOne({_id}).catch(err => console.log(err.message));
     if(!data) {
         return res.status(400).send({
             status: false,
-            error: 'there is no access',
+            error: 'there is no rounding',
         })
     }
     
     return res.send({
         status: true,
         data,
-    });
+    })
+};
+
+// it should be used on client side
+const get_mine = async (req, res) => {
+    const { currentUser } = req;
+    const roundings = await Rounding.find({user: currentUser._id}).catch(err => console.log(err.message));
+    return res.send({ status: true, data: { roundings} });
+};
+
+const get_recently = async (req, res) => {
+    const { limit, skip } = req.body;
+    const now = new Date();
+    const roundings = await Rounding.aggregate([
+        {
+            $match: {start_time: {$gte: now}},
+        },
+        {
+            $limit: limit? parseInt(limit) : 10, 
+        },
+        {
+            $skip: skip? parseInt(skip) : 0
+        },
+    ]).catch(err => console.log(err.message));
+    
+    return res.send({status: true, data: { roundings}});
 };
 
 module.exports = {
@@ -96,4 +116,7 @@ module.exports = {
     removes,
     get,
     gets,
+
+    get_mine,
+    get_recently,
 }

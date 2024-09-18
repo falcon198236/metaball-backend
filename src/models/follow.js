@@ -2,14 +2,12 @@ const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 
-const ReviewSchema = new Schema(
+const FollowSchema = new Schema(
   {
-    name: String,
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
-    who: { type: mongoose.Schema.Types.ObjectId },
+    person: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
+    club: { type: mongoose.Schema.Types.ObjectId, ref: 'club' },
     type: String, // person, club, event, .......
-    intro: String,
-    files: [{type: String}],
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
@@ -18,6 +16,6 @@ const ReviewSchema = new Schema(
 
 ReviewSchema.index({ nick_name: 1 });
 
-const Review = mongoose.model('review', ReviewSchema);
+const Follow = mongoose.model('follow', FollowSchema);
 
-module.exports = Review;
+module.exports = Follow;

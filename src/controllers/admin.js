@@ -123,7 +123,7 @@ const remove = async (req, res) => {
     const { _id } = req.params;
     
     const result = await Admin.deleteOne({_id}).catch(err => {
-        return res.status(201).send({
+        return res.status(400).send({
             status: false,
             error: err.message,
         });

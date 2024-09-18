@@ -17,37 +17,33 @@ const signup = async(req, res) => {
             error,
         })
     }
-    return res.send({ status });
+    return res.send({ status: true });
 };
 
 const update = async(req, res) => {
-    const _id = req.body._id;
-    delete req.body._id;
+    const { _id } = req.params;
     const _files = req.files?.map(f => f.path);
     const user = await User.findOne({_id}).catch(err=> console.log(err.message));
     if (!user) {
         return res.status(400).send({status: false, error: 'there is no user'});
     }
     if (_files?.length) {
-        if (user.icon) {
+        if (user.logo) {
             try {
-                fs.unlinkSync(user.icon);
+                fs.unlinkSync(user.logo);
             }catch(err) {
                 console.log(err.message);
             }
         }
-        req.body['icon'] = _files[0];
+        req.body['logo'] = _files[0];
     }
-    await User.updateOne({_id}, {$set: req.body}).then((_res) => {
-        return res.send({
-            status: true,
-        })
-    }).catch((err) => {
+    const result = await User.updateOne({_id}, {$set: req.body}).catch((err) => {
         return res.status(400).send({
             status: false,
             error: err.message,
         })
     });
+    return res.send({status: true, data: {result}});
 };
 
 const login = async(req, res) => {
@@ -87,7 +83,7 @@ const login = async(req, res) => {
     const token = jwt.sign(payload, api.SECURITY_KEY);
     user.last_login_at = new Date();
     const _user = { ...user._doc, last_login_at: new Date};
-    User.replaceOne({_id: user._id}, _user, { upsert: true }).catch(err => console.log(err));
+    await User.replaceOne({_id: user._id}, _user, { upsert: true }).catch(err => console.log(err));
     const __user = remove_security_info(_user);
     return res.send({
         status: true,
@@ -141,9 +137,9 @@ const remove = async (req, res) => {
         });
     }
 
-    if (user['icon']) {
-        if(fs.existsSync(user['icon'])) {
-            fs.unlinkSync(user['icon']);    
+    if (user['logo']) {
+        if(fs.existsSync(user['logo'])) {
+            fs.unlinkSync(user['logo']);    
         }
     }
     const result = await User.deleteOne({_id}).catch(err => {
@@ -160,9 +156,9 @@ const removes = async (req, res) => {
     
     const users = await User.find({_id: {$in: _ids}}).catch(err => console.log(err.message));
     users.forEach(u => {
-        if (u['icon']) {
-            if(fs.existsSync(u['icon'])) {
-                fs.unlinkSync(u['icon']);    
+        if (u['logo']) {
+            if(fs.existsSync(u['logo'])) {
+                fs.unlinkSync(u['logo']);    
             }
         }   
     });

@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.get('/', checkAuth, catchError(user.gets));
 router.post('/signup', catchError(user.signup));
-router.put('/', checkAuth, upload.array('files', 1), catchError(user.update));
+router.put('/:_id', checkAuth, upload.array('files', 1), catchError(user.update));
 router.post('/login', catchError(user.login));
 router.post('/logout', checkAuth, catchError(user.logout));
 router.delete('/:_id', checkAuth, catchError(user.remove));

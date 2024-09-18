@@ -16,9 +16,9 @@ const UserSchema = new Schema(
     hash: String,
     salt: String,
     phone: String,
-    icon: String,
-    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
-    followered: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
+    logo: String,
+    address: String,
+    themes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'settings' }],
     experience_years: {
       type: Number,
       default: 0,
