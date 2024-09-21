@@ -1,17 +1,18 @@
 const express = require('express');
 
 const access = require('../../controllers/access');
-const { checkAdminAuth } = require('../../middleware/auth')
+const { checkListParam } = require('../../middleware/params')
 const {catchError} = require('../error');
 
 const router = express.Router();
 
-router.get('/', checkAdminAuth, catchError(access.gets));
+router.get('/', checkListParam, catchError(access.gets));
+router.get('/:_id', catchError(access.get));
 
-router.post('/create', checkAdminAuth, catchError(access.create));
-router.put('/', checkAdminAuth, catchError(access.update));
-router.delete('/:_id', checkAdminAuth, catchError(access.remove));
-router.post('/', checkAdminAuth, catchError(access.removes));
-router.get('/:_id', checkAdminAuth, catchError(access.get));
+router.post('/', catchError(access.create));
+router.put('/:_id', catchError(access.update));
+
+router.delete('/', catchError(access.removes));
+router.delete('/:_id', catchError(access.remove));
 
 module.exports = router;

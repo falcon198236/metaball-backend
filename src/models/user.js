@@ -18,15 +18,24 @@ const UserSchema = new Schema(
     phone: String,
     logo: String,
     address: String,
+    introduce: String,
     themes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'settings' }],
-    experience_years: {
+    accesses: [{type: mongoose.Schema.Types.ObjectId, ref: 'access'}], //only for admin
+    experience_years: { //高尔夫历
       type: Number,
       default: 0,
     },
-    best_score: {
+    average_score : {  //平均分
       type: Number,
       default: 0,
     },
+    month_average_score : {  //月平均次数
+      type: Number,
+      default: 0,
+    },
+    follow_user_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }], //내가 follow한것
+    follow_club_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'club' }], //내가 follow한것
+    
     last_login_at: Date, 
     role: {type: Number, default: 2},
     deleted: {type: Boolean, default: false},

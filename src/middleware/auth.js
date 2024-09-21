@@ -1,7 +1,6 @@
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const api = require('../configs/api.js');
-const Admin = require('../models/admin.js');
 
 const checkAuth = async (req, res, next) => {
   const bearer_token = req.get('Authorization');
@@ -12,21 +11,18 @@ const checkAuth = async (req, res, next) => {
   } catch (err) {
     console.log('check verify error', err.message || err.msg);
   }
-
+  //  console.log(decoded);
   if (!decoded) {
     return res.status(401).send({
       status: false,
       error: 'Authorization failed',
     });
   }
-
   req.currentUser = await User.findOne({
     _id: decoded?.id,
-    deleted: false,
   }).catch((err) => {
     console.log('err', err);
   });
-
   if (req.currentUser) {
       next();
   } else {
@@ -41,7 +37,7 @@ const checkAuth = async (req, res, next) => {
 
 const checkAdminAuth = async (req, res, next) => {
   const bearer_token = req.get('Authorization');
-  const token = bearer_token.replace('Bearer ', '');
+  const token = bearer_token?.replace('Bearer ', '');
   let decoded; 
   try {
     decoded = jwt.verify(token, api.SECURITY_ADMIN_KEY);
@@ -54,12 +50,13 @@ const checkAdminAuth = async (req, res, next) => {
       error: 'Authorization failed',
     });
   }
-
+  
   req.currentUser = await User.findOne({
     _id: decoded?.id,
   }).catch((err) => {
     console.log('err', err);
   });
+  
   if (req.currentUser) {
       next();
   } else {
@@ -69,6 +66,7 @@ const checkAdminAuth = async (req, res, next) => {
     });
   }
 };
+
 
 module.exports = {
   checkAuth,

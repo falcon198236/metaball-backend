@@ -3,25 +3,36 @@ const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const api = require('../configs/api');
+const { syslog } = require('../helpers/systemlog');
+const { SystemActionType } = require('../constants/type');
 
 const {
     create: createUser,
-    remove_security_info,
 } = require('../helpers/user');
 
+const SECTION = 'user';
 const signup = async(req, res) => {
-    const {status, error} = await createUser(req.body);
+    req.body.role = 2;
+    const _files = req.files?.map(f => f.path);
+    if (_files?.length) {
+        req.body['logo'] = _files[0];
+    }
+    const {status, data, error} = await createUser(req.body);
     if(!status) {
         return res.status(400).send({
             status,
             error,
         })
     }
-    return res.send({ status: true });
+    syslog(data._id, SECTION, SystemActionType.SIGNUP, req.body);
+    return res.send({ status: true, data });
 };
 
 const update = async(req, res) => {
-    const { _id } = req.params;
+    const { currentUser } = req;
+    const { _id: id } = req.params;
+    let _id = id;
+    if ( !id ) _id = currentUser._id;
     const _files = req.files?.map(f => f.path);
     const user = await User.findOne({_id}).catch(err=> console.log(err.message));
     if (!user) {
@@ -43,9 +54,113 @@ const update = async(req, res) => {
             error: err.message,
         })
     });
-    return res.send({status: true, data: {result}});
+    syslog(currentUser._id, SECTION, SystemActionType.UPDATE, req.body);
+    return res.send({status: true, data: result});
 };
 
+const gets = async (req, res) => {
+    const { key, limit, skip } = req.query;
+    const query = [{role: { $nin: [0, 1]}}];
+    if (key)
+        query.push({email: {$regex: `${key}.*`, $options:'i' }});
+    
+    const count = await User.countDocuments({$and: query});
+    const users = await User.aggregate([
+        {
+            $match: {$and: query},
+        },
+        {
+            $project: {
+                access: 0,
+                role: 0,
+                salt: 0,
+                hash: 0,
+                deleted: 0,
+                __v: 0,
+            }
+        },
+        {
+            $limit: limit, 
+        },
+        {
+            $skip: skip
+        }, 
+        
+    ]);
+
+    return res.send({ status: true, data: {count, users} });
+};
+
+const remove = async (req, res) => {
+    const { _id } = req.params;
+    const user = await User.findOne({_id}).catch(err => console.log(err.message));
+    if (!user) {
+        return res.status(400).send({
+            status: false,
+            error: 'there is no user',
+        });
+    }
+
+    if (user['logo']) {
+        if(fs.existsSync(user['logo'])) {
+            fs.unlinkSync(user['logo']);    
+        }
+    }
+    const result = await User.deleteOne({_id}).catch(err => {
+        return res.status(201).send({
+            status: false,
+            error: err.message,
+        });
+    });
+    syslog(currentUser._id, SECTION, SystemActionType.DELETE, _id);
+    return res.send({status: true, data: result});
+};
+
+const removes = async (req, res) => {
+    const { ids } = req.body;
+    
+    const users = await User.find({_id: {$in: ids}}).catch(err => console.log(err.message));
+    users.forEach(u => {
+        if (u['logo']) {
+            if(fs.existsSync(u['logo'])) {
+                fs.unlinkSync(u['logo']);    
+            }
+        }   
+    });
+
+    const result = await User.deleteMany({_id: {$in: _ids}}).catch(err => {
+        return res.status(201).send({
+            status: false,
+            error: err.message,
+        });
+    });
+    syslog(currentUser._id, SECTION, SystemActionType.DELETE, ids);
+    return res.send({status: true, data: result});
+};
+
+const get = async (req, res) => {
+    const { _id } = req.params;
+    const _user = await User.findOne({_id}, {
+        access: 0,
+        role: 0,
+        salt: 0,
+        hash: 0,
+        deleted: 0,
+        __v: 0,
+    }).catch(err => console.log(err.message));
+    if (!_user) {
+        return res.status(400).send({
+            status: false,
+            error: 'there is no user',
+        })
+    }
+    return res.send({
+        status: true,
+        data: user,
+    })
+};
+
+///////////////////////// CLIENT ///////////////////////////////
 const login = async(req, res) => {
     const {email, password} = req.body;
     const user = await User.findOne({
@@ -84,117 +199,79 @@ const login = async(req, res) => {
     user.last_login_at = new Date();
     const _user = { ...user._doc, last_login_at: new Date};
     await User.replaceOne({_id: user._id}, _user, { upsert: true }).catch(err => console.log(err));
-    const __user = remove_security_info(_user);
+    syslog(user._id, SECTION, SystemActionType.LOGIN);
     return res.send({
         status: true,
         data: {
             token,
-            user: __user,
+            user: _user,
         }
     })
 };
 
 const logout = async(req, res) => {
     const {currentUser} = req;
+    syslog(currentUser._id, SECTION, SystemActionType.LOGOUT);
     res.send({
         status: true,
     })
 };
 
-const gets = async (req, res) => {
-    const { key, limit, skip, deleted:_deleted } = req.query;
-    let deleted = _deleted;
-    if(!deleted) deleted = false;
-    else deleted = deleted === 'true';
-    const query = [{deleted}];
-    if (key)
-        query.push({email: {$regex: `${key}.*`, $options:'i' }});
-    
-    const count = await User.countDocuments({$and: query});
-    const users = await User.aggregate([
-        {
-            $match: {$and: query},
-        },
-        {
-            $limit: parseInt(limit), 
-        },
-        {
-            $skip: parseInt(skip)
-        }
-    ]);
-
-    return res.send({ status: true, data: {count, users} });
-};
-
-const remove = async (req, res) => {
-    const {currentUser} = req;
-    const { _id } = req.params;
-    const user = await User.findOne({_id}).catch(err => console.log(err.message));
-    if (!user) {
-        return res.status(400).send({
-            status: false,
-            error: 'there is no user',
-        });
-    }
-
-    if (user['logo']) {
-        if(fs.existsSync(user['logo'])) {
-            fs.unlinkSync(user['logo']);    
-        }
-    }
-    const result = await User.deleteOne({_id}).catch(err => {
-        return res.status(201).send({
-            status: false,
-            error: err.message,
-        });
-    });
-    return res.send({status: true, data: {result}});
-};
-
-const removes = async (req, res) => {
-    const { _ids } = req.body;
-    
-    const users = await User.find({_id: {$in: _ids}}).catch(err => console.log(err.message));
-    users.forEach(u => {
-        if (u['logo']) {
-            if(fs.existsSync(u['logo'])) {
-                fs.unlinkSync(u['logo']);    
-            }
-        }   
-    });
-
-    const result = await User.deleteMany({_id: {$in: _ids}}).catch(err => {
-        return res.status(201).send({
-            status: false,
-            error: err.message,
-        });
-    });
-    return res.send({status: true, data: {result}});
-};
-
-const get = async (req, res) => {
-    const { _id } = req.params;
-    const _user = await User.findOne({_id}).catch(err => console.log(err.message));
-    if (!_user) {
-        return res.status(400).send({
-            status: false,
-            error: 'there is no user',
-        })
-    }
-    const user = remove_security_info(_user);
+const me = async (req, res) => {
+    const { currentUser } = req;
     return res.send({
         status: true,
-        user,
+        data: currentUser,
     })
 };
 
+const changePassword = async (req, res) => {
+    const { currentUser } = req;
+    const { password } = req.body;
+
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = crypto
+        .pbkdf2Sync(password, salt, 10000, 512, 'sha512')
+        .toString('hex');
+    const result = await User.updateOne({ _id: currentUser._id}, {
+        $set: {
+            salt,
+            hash,
+        }
+    }).catch(err => {
+        return res.status(400).send({
+            status: false,
+            error: err.message,
+        })
+    });
+    syslog(currentUser._id, SECTION, SystemActionType.DELETE, password);
+    return res.send({
+        status: true,
+        data: result,
+    })
+};
+
+const forgot = async (req, res) => {
+    const { email } = req.body;
+    // send email
+    return res.send({
+        status: true,
+    })
+}
+////////////////////////////////////////////////////////////////
+
 module.exports = {
-    signup,
-    update,
     remove,
     removes,
     login,
     logout,
     get,
     gets,
+
+    ////////////////// client ///////////////////
+    signup,
+    update,
+    me,
+    changePassword,
+    forgot,
 }

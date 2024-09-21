@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const User = require('../models/user');
 const api = require('../configs/api');
 
-const createSuperAdmin = async() => {
+const createSuperManager = async() => {
     const data = {
         email: api.SUPER_ADMIN_EMAIL,
         password: api.SUPER_ADMIN_PASSWORD
@@ -37,9 +37,12 @@ const createSuperAdmin = async() => {
 
 const create = async(data) => {
     const {email, password, role} = data;
-    const _admin = await User.findOne({email}).catch(() => {});
-    if(_admin) {
-        return {status: false, error: 'the user is already exists.'};
+    const _manager = await User.findOne({email}).catch(() => {});
+    if(_manager) {
+        return {
+            status: false, 
+            error: 'the user is already exists.'
+        };
     }
 
     const salt = crypto.randomBytes(16).toString('hex');
@@ -50,33 +53,21 @@ const create = async(data) => {
     data['hash'] = hash;
     data['salt'] = salt;
     data['role'] = role || 1;
-    const admin = new Admin ({
+    const manager = new User ({
         ...data,
     });
-    let status = false;
-    let error;
-    await admin.save().then(() => {
-        status = true;
-    }).catch(err=> {
-        console.log('faild create user.'),
-        status = false;
-        error = err.message;
+
+    const result = await manager.save().catch(err=> {
+        return {
+            status: false,
+            error: err.message,
+        };
     });
-    return {status: true, error};
+    
+    return {status: true, data: result};
 };
 
-
-const remove_security_info = (user) => {
-    delete user['salt'];
-    delete user['created_at'];
-    delete user['updated_at'];
-    delete user['deleted'];
-    delete user['__v'];
-    return user;
-}
-
 module.exports = {
-    createSuperAdmin,
+    createSuperManager,
     create,
-    remove_security_info,
 }

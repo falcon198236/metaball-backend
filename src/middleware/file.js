@@ -1,7 +1,8 @@
 const multer = require('multer');
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, 'uploads' + req.baseUrl); // Upload directory
+      const url = req.baseUrl.replace('admin/','');
+      cb(null, 'uploads' + url); // Upload directory
     },
     filename: (req, file, cb) => {
         const uploadFile = `${Date.now()}-${file.originalname}`;

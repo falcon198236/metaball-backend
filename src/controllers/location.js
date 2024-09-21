@@ -1,6 +1,11 @@
 const Location = require('../models/location');
+const { syslog } = require('../helpers/systemlog');
+const { SystemActionType } = require('../constants/type');
 
+const SECTION = 'location';
 const create = async(req, res) => {
+    const { currentUser } = req;
+    req.body.user = currentUser._id;
     const location = new Location({
         ... req.body,
     });
@@ -10,18 +15,21 @@ const create = async(req, res) => {
             error: err.message,
         })
     });
-    return res.send({ status: true, data: {result} });
+    syslog(currentUser._id, SECTION, SystemActionType.ADD, req.body);
+    return res.send({ status: true, data: result });
 };
 
 const update = async(req, res) => {
-    const {_id, data} = req.body;
-    const result = await Location.updateOne({_id}, {$set: data}).catch((err) => {
+    const { currentUser } = req;
+    const {_id} = req.params;
+    req.body.user = currentUser._id;
+    const result = await Location.updateOne({_id}, {$set: req.body}).catch((err) => {
         return res.status(400).send({
             status: false,
             error: err.message,
         })
     });
-    return res.send({ status: true, data: {result} });
+    return res.send({ status: true, data: result });
 };
 
 const gets = async (req, res) => {
@@ -30,7 +38,7 @@ const gets = async (req, res) => {
     if (key)
         query.push({name: {$regex: `${key}.*`, $options:'i' }});
     const count = await Location.countDocuments({$and:query});
-    const data = await Location.aggregate([
+    const locations = await Location.aggregate([
         {
             $match: {$and: query},
         },
@@ -42,36 +50,41 @@ const gets = async (req, res) => {
         },
     ]);
 
-    return res.send({ status: true, data: {count, data} });
+    return res.send({ status: true, data: {count, locations} });
 };
 
 const remove = async (req, res) => {
+    const {currentUser} = req;
     const { _id } = req.params;
+    
     const result = await Location.deleteOne({_id}).catch(err => {
         return res.status(400).send({
             status: false,
             error: err.message,
         });
     });
-    return res.send({status: true, data: {result}});
+    syslog(currentUser._id, SECTION, SystemActionType.DELETE, _id);
+    return res.send({status: true, data: result});
 };
 
 const removes = async (req, res) => {
-    const { _ids } = req.body;
-    
-    const result = await Location.deleteMany({_id: {$in: _ids}}).catch(err => {
+    const {currentUser} = req;
+    const { ids } = req.body;
+    const result = await Location.deleteMany({_id: {$in: ids}}).catch(err => {
         return res.status(400).send({
             status: false,
             error: err.message,
         });
     });
-    return res.send({status: true, data: {result}});
+    syslog(currentUser._id, SECTION, SystemActionType.DELETE, ids);
+    return res.send({status: true, data: result});
 };
 
 const get = async (req, res) => {
+    const {currentUser} = req;
     const { _id } = req.params;
-    const data = await Location.findOne({_id}).catch(err => console.log(err.message));
-    if(!data) {
+    const location = await Location.findOne({_id}).catch(err => console.log(err.message));
+    if(!location) {
         return res.status(400).send({
             status: false,
             error: 'there is no access',
@@ -80,8 +93,8 @@ const get = async (req, res) => {
     
     return res.send({
         status: true,
-        data,
-    })
+        data: location,
+    });
 };
 
 module.exports = {

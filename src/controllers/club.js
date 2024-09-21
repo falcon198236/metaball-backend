@@ -3,11 +3,9 @@ const Club = require('../models/club');
 const { default: mongoose } = require('mongoose');
 
 const create = async(req, res) => {
-    const { currentUser } = req;
     const _files = req.files?.map(f => f.path);
     const data = {
         ... req.body,
-        user: currentUser._id,
     }
     if(_files?.length) data.logo = _files[0];
     const club = new Club({data});
@@ -132,6 +130,25 @@ const get = async (req, res) => {
 
 
 // functions for Clients
+const createOwn = async(req, res) => {
+    const { currentUser } = req;
+    const _files = req.files?.map(f => f.path);
+    const data = {
+        ... req.body,
+        user: currentUser._id,
+    }
+    if(_files?.length) data.logo = _files[0];
+    const club = new Club({data});
+    const result = await club.save().catch(err => {
+        return res.status(400).send({
+            status,
+            error: err.message,
+        })
+    });
+    return res.send({ status: true, data: {result} });
+};
+
+
 const getMyClubs = async (req, res) => {
     const { currentUser } = req;
     const { limit, skip } = req.query;
@@ -304,7 +321,7 @@ const addMember = async (req, res) => {
     if (b >=0) {
         club.request_member_ids.splice(b, 1);
     }
-    club.member_ids.push(mongoose.Schema.Types.ObjectId(member_id));
+    club.member_ids.push(mongoose.Types.ObjectId(member_id));
     const result = await Club.updateOne({_id}, {
         $set: {
             member_ids: club.member_ids,
@@ -408,6 +425,7 @@ module.exports = {
     gets,
 
     // functions for Client
+    createOwn,          // Add my club
     getMyClubs,         // My clubs
     getMeInClubs,       // clubs that I am as member
     getRequestClubs,    // Clubs that I request.

@@ -1,7 +1,8 @@
 const Follow = require('../models/follow');
 const { FollowType, SettingsType } = require('../constants/type');
-const { model } = require('mongoose');
+const { model, default: mongoose } = require('mongoose');
 const User = require('../models/user');
+const Club = require('../models/club');
 const create = async(req, res) => {
     const { currentUser } = req;
     req.body.user = currentUser._id;
@@ -91,32 +92,54 @@ const get = async (req, res) => {
     });
 };
 
-const set_mark = async (req, res) => {
+const setFollow = async (req, res) => {
     const { currentUser } = req;
     const { id, type } = req.body;
     const filter = {
         user: currentUser._id,
         [type]: id  
     };
-    const old_follow = await Follow.findOne(filter).catch(err => console.log(err.message));
-    if (old_follow) {
-        return res.status(400).send({
-            status: false,
-            error: 'you aleady followd him or the club',
-        })
+    let result;
+    if (type === FollowType.PERSON) {
+        const index = currentUser.follow_user_ids.findIndex(e => e.toString() === id);
+        if (index >= 0) {
+            return res.status(200).send({
+                status: false,
+                error: 'you aleady followd him',
+            })    
+        }
+        currentUser.follow_user_ids.push(mongoose.Types.ObjectId(id));
+        result = await User.updateOne({_id: currentUser._id}, {
+            $set: {
+                follow_user_ids: currentUser.follow_user_ids,
+            }
+        }).catch(err => {
+            return res.status(400).send({
+                status: false,
+                error: err.message,
+            })
+        });
+    } else if (type === FollowType.CLUB) {
+        const index = currentUser.follow_club_ids.findIndex(e => e.toString() === id);
+        if (index >= 0) {
+            return res.status(200).send({
+                status: false,
+                error: 'you aleady followd club',
+            })    
+        }
+        currentUser.follow_club_ids.push(mongoose.Types.ObjectId(id));
+        result = await User.updateOne({_id: currentUser._id}, {
+            $set: {
+                follow_club_ids: currentUser.follow_club_ids,
+            }
+        }).catch(err => {
+            return res.status(400).send({
+                status: false,
+                error: err.message,
+            })
+        });
     }
-
-    const follow = new Follow({
-        user: currentUser._id,
-        [type]: id,
-        type,
-    });
-    const result = await follow.save().catch(err => {
-        return res.status(400).send({
-            status: false,
-            error: err.message,
-        })
-    })
+    
     return res.send({
         status: true,
         data: {
@@ -125,15 +148,54 @@ const set_mark = async (req, res) => {
     });
 };
 
-const unset_mark = async (req, res) => {
+const cancelFollow = async (req, res) => {
     const { currentUser } = req;
-    const { _id } = req.query;
-    const result = await Follow.deleteOne(_id).catch(err => {
-        return res.status(400).send({
-            status: false,
-            error: err.message,
-        })
-    });
+    const { id, type } = req.body;
+    const filter = {
+        user: currentUser._id,
+        [type]: id  
+    };
+    let result;
+    if (type === FollowType.PERSON) {
+        const index = currentUser.follow_user_ids.findIndex(e => e.toString() === id);
+        if (index < 0) {
+            return res.status(200).send({
+                status: false,
+                error: 'you do not follow the user',
+            })    
+        }
+        currentUser.follow_user_ids.splice(index, 1);
+        result = await User.updateOne({_id: currentUser._id}, {
+            $set: {
+                follow_user_ids: currentUser.follow_user_ids,
+            }
+        }).catch(err => {
+            return res.status(400).send({
+                status: false,
+                error: err.message,
+            })
+        });
+    } else if (type === FollowType.CLUB) {
+        const index = currentUser.follow_club_ids.findIndex(e => e.toString() === id);
+        if (index < 0) {
+            return res.status(200).send({
+                status: false,
+                error: 'you do not follow the club.',
+            })    
+        }
+        currentUser.follow_club_ids.splice(index, 1);
+        result = await User.updateOne({_id: currentUser._id}, {
+            $set: {
+                follow_club_ids: currentUser.follow_club_ids,
+            }
+        }).catch(err => {
+            return res.status(400).send({
+                status: false,
+                error: err.message,
+            })
+        });
+    }
+    
     return res.send({
         status: true,
         data: {
@@ -142,44 +204,44 @@ const unset_mark = async (req, res) => {
     });
 };
 
-const get_followed = async (req, res) => {
+const getFollowing = async (req, res) => {
     const { currentUser } = req;
-    const { id, type, limit, skip } = req.query; // id : user or club 'id
-    const filter = { type };
-    const follows = await Follow.find({
-        [type]: id,
-        type
-    })
-    .sort({update_at: -1})
-    .populate({path: 'person', model: User})
-    .populate('club')
-    .skip(skip? parseInt(skip) : 0)
-    .limit(limit? parseInt(limit) : 10)
-    .catch(err => console.log(err.message));
-
+    const { type, limit, skip } = req.query; // id : user or club 'id
+    let users, clubs;
+    if (type === FollowType.PERSON) {
+        users = await User.find({_id: {$in: currentUser.follow_user_ids}})
+            .limit(limit)
+            .skip(skip)
+            .catch(err=>console.log(err.message));
+    } else if (type === FollowType.CLUB) {
+        clubs = await Club.find({_id: {$in: currentUser.follow_club_ids}}).catch(err=>console.log(err.message))
+            .limit(limit)
+            .skip(skip)
+            .catch(err=>console.log(err.message));
+    }
+    
     return res.send({
         status: true,
-        data: follows,
+        data: {
+            users,
+            clubs,
+        },
     });
 };
 
-const get_following = async (req, res) => {
+const getFollowed = async (req, res) => {
     const { currentUser } = req;
-    const { type, limit, skip } = req.query; // persion or club
-    const follows = await Follow.find({
-        user: currentUser._id,
-        type
-    })
-    .sort({update_at: -1})
-    .populate('user')
-    .populate('club')
-    .skip(skip? parseInt(skip) : 0)
-    .limit(limit? parseInt(limit) : 10)
-    .catch(err => console.log(err.message));
-
+    const { limit, skip } = req.query;
+    const users = await User.find({follow_user_ids: currentUser._id})
+            .limit(limit)
+            .skip(skip)
+            .catch(err=>console.log(err.message));
+    
     return res.send({
         status: true,
-        data: follows,
+        data: {
+            users,
+        },
     });
 };
 
@@ -193,8 +255,8 @@ module.exports = {
     gets,
 
     // api for Client
-    set_mark,
-    unset_mark, 
-    get_followed,
-    get_following,
+    setFollow,
+    cancelFollow, 
+    getFollowed,
+    getFollowing,
 }

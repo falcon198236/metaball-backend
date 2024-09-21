@@ -7,13 +7,12 @@ const ContentSchema = new Schema(
     title: String,
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     files: [{type: String}],
-    intro: String,
+    introdution: String,
     type: {
       type: String,
-      default: 'blog', // blog, notification, event, information, news
+      default: 'news', // blog, notification, event, information, news
     },
-    club: { type: mongoose.Schema.Types.ObjectId, ref: 'club'}, //if event case.
-    
+    active: { type: Boolean, default: true},
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

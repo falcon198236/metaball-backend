@@ -1,51 +1,57 @@
 const Access = require('../models/access');
+const { syslog } = require('../helpers/systemlog');
+const { SystemActionType } = require('../constants/type');
+const SECTION = 'manager';
 
 const create = async(req, res) => {
     const { currentUser } = req;
     req.body.user = currentUser._id;
-    const follow = new Access({
+    const access = new Access({
         ... req.body,
     });
-    const result = await follow.save().catch(err => {
+    const result = await access.save().catch(err => {
         return res.status(400).send({
             status: false,
             error: err.message,
         })
     });
-    return res.send({ status: true, data: {result} });
+    syslog(currentUser._id, SECTION, SystemActionType.ADD, req.body);
+    return res.send({ status: true, data: result });
 };
 
 const update = async(req, res) => {
-    const {_id, data} = req.body;
+    const { currentUser } = req;
+    const {_id} = req.params;
     req.body.user = currentUser._id;
-    const result = await Access.updateOne({_id}, {$set: data}).catch((err) => {
+    const result = await Access.updateOne({_id}, {$set: req.body}).catch((err) => {
         return res.status(400).send({
             status: false,
             error: err.message,
         })
     });
-    return res.send({ status: true, data: {result} });
+    syslog(currentUser._id, SECTION, SystemActionType.UPDATE, req.body);
+    return res.send({ status: true, data: result });
 };
 
 const gets = async (req, res) => {
     const { key, limit, skip } = req.query;
     const query = [{created_at: {$gte: new Date('2000-1-1')}}];
     if (key)
-        query.push({email: {$regex: `${key}.*`, $options:'i' }});
+        query.push({title: {$regex: `${key}.*`, $options:'i' }});
     const count = await Access.countDocuments({$and:query});
-    const data = await Access.aggregate([
+    const accesses = await Access.aggregate([
         {
             $match: {$and: query},
         },
         {
-            $limit: limit? parseInt(limit) : 10, 
+            $limit: limit, 
         },
         {
-            $skip: skip? parseInt(skip) : 0
+            $skip: skip
         },
     ]);
 
-    return res.send({ status: true, data: {count, data} });
+    return res.send({ status: true, data: {count, accesses} });
 };
 
 const remove = async (req, res) => {
@@ -58,25 +64,28 @@ const remove = async (req, res) => {
             error: err.message,
         });
     });
-    return res.send({status: true, data: {result}});
+    syslog(currentUser._id, SECTION, SystemActionType.DELETE, _id);
+    return res.send({status: true, data: result});
 };
 
 const removes = async (req, res) => {
-    const { _ids } = req.body;
+    const {currentUser} = req;
+    const { ids } = req.body;
     
-    const result = await Access.deleteMany({_id: {$in: _ids}}).catch(err => {
+    const result = await Access.deleteMany({_id: {$in: ids}}).catch(err => {
         return res.status(400).send({
             status: false,
             error: err.message,
         });
     });
-    return res.send({status: true, data: {result}});
+    syslog(currentUser._id, SECTION, SystemActionType.DELETE, ids);
+    return res.send({status: true, data: result});
 };
 
 const get = async (req, res) => {
     const { _id } = req.params;
-    const data = await Access.findOne({_id}).catch(err => console.log(err.message));
-    if(!data) {
+    const access = await Access.findOne({_id}).catch(err => console.log(err.message));
+    if(!access) {
         return res.status(400).send({
             status: false,
             error: 'there is no access',
@@ -85,7 +94,7 @@ const get = async (req, res) => {
     
     return res.send({
         status: true,
-        data,
+        data: access,
     });
 };
 

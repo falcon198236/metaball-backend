@@ -6,7 +6,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const appRouter = require('./routes/');
 const adminRouter = require('./routes/admin');
-const { createSuperAdmin } = require('./helpers/admin')
+const { createSuperManager } = require('./helpers/manager')
 const app = express();
 
 app.use(express.json({ limit: '50mb' }));
@@ -31,7 +31,7 @@ process.on('uncaughtException', (err) => {
 });
 
 // create super admin
-createSuperAdmin();
+createSuperManager();
 const logIncomingRequest = (req) => {
   // eslint-disable-next-line no-nested-ternary
   const user = req.decoded

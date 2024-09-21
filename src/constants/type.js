@@ -7,19 +7,34 @@ const RoundingMakeType = {
     CLUB: 'club',
 };
 
-const SettingsType = {
-    LIFE: 'life', //  골르라이프 관리
-    HIT: 'hit', // 평규 타수 관리, hit
-    EXPERIENCE: 'experience',  // 골프 경력, experience
-    NOTE: 'note',  // 골프 노트 분류 note
-    INVITOR: 'invitor',  // 초청자 분류, invitor
-    ROUNDING: 'rounding',  // 찾는 라운딩 타입, rounding
-    THEME: 'theme',  // 인기 라운딩 테마 , theme
-    MEETING: 'meeting',  // 모임 관리          meeting
+const ContentType = {
+    NOTIFICATION: 'notification', //알람
+    NOTE: 'note', //공지사항
+    NEWS: 'news', //뉴스
 };
+
+const SettingsType = {
+    SCORE: 'score', // 평규 타수 관리, hit
+    EXPERIENCE: 'experience',  // 골프 경력, experience
+    THEME: 'theme',  // 인기 라운딩 테마 , theme
+};
+
+const SystemActionType = {
+    DELETE: 'delete',
+    ADD: 'add',
+    UPDATE: 'update',
+    LOGIN: 'login',
+    LOGOUT: 'logout',
+    SIGNUP: 'signup',
+    CHANGE_PASSOWRD: 'change password',
+    RESET_PASSOWRD: 'reset password',
+};
+
 
 module.exports = {
     FollowType,
     SettingsType,
     RoundingMakeType,
+    ContentType,
+    SystemActionType,
 }
