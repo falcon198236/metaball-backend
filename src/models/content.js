@@ -7,7 +7,7 @@ const ContentSchema = new Schema(
     title: String,
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     files: [{type: String}],
-    introdution: String,
+    introduction: String,
     type: {
       type: String,
       default: 'news', // blog, notification, event, information, news

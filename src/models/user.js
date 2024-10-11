@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { appdb } = require('../db');
+const { Socket } = require('socket.io');
 
 const Schema = mongoose.Schema;
 
@@ -13,12 +14,14 @@ const UserSchema = new Schema(
       required: true,
       unique: true  // Ensure email is unique
     },
+    birthday: Date,
+    sex: String, //m: man, w: woman
     hash: String,
     salt: String,
     phone: String,
     logo: String,
     address: String,
-    introduce: String,
+    introduction: String,
     themes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'settings' }],
     accesses: [{type: mongoose.Schema.Types.ObjectId, ref: 'access'}], //only for admin
     experience_years: { //高尔夫历
@@ -33,12 +36,14 @@ const UserSchema = new Schema(
       type: Number,
       default: 0,
     },
-    follow_user_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }], //내가 follow한것
-    follow_club_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'club' }], //내가 follow한것
+    follow_user_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }], // followed users
+    follow_blog_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'blog' }], // followed blogs
+    follow_rounding_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'rounding' }], // followed roundings
     
     last_login_at: Date, 
     role: {type: Number, default: 2},
     deleted: {type: Boolean, default: false},
+    socket_id: String,
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

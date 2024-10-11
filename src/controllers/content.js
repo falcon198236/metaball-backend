@@ -1,7 +1,9 @@
 const Content = require('../models/content');
 const fs = require('fs');
 const { syslog } = require('../helpers/systemlog');
-const { SystemActionType } = require('../constants/type');
+const { BlogFilterType } = require('../constants/type');
+const { SystemActionType, ContentType } = require('../constants/type');
+const Review = require('../models/review');
 
 const SECTION = 'content';
 const create = async(req, res) => {
@@ -20,7 +22,7 @@ const create = async(req, res) => {
     });
 
     syslog(currentUser._id, SECTION, SystemActionType.ADD, req.body);
-    return res.send({status: true, data: {result}});
+    return res.send({status: true, data: result});
     
 };
 
@@ -163,6 +165,7 @@ const gets = async (req, res) => {
 
     return res.send({ status: true, data: {count, content} });
 };
+
 
 module.exports = {
     create,

@@ -1,4 +1,5 @@
 const express = require('express');
+
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const { v4: uuidv4 } = require('uuid');
@@ -19,7 +20,8 @@ app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 //   next();
 // });
 
-
+app.use('/uploads', express.static('uploads')); 
+app.use('/public', express.static('public')); 
 app.get('/hello', (req, res) => {
   res.send(`Metaball API Cool!: Project= '${process.env.PROJECT}'`);
 });

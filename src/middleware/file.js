@@ -1,7 +1,8 @@
 const multer = require('multer');
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-      const url = req.baseUrl.replace('admin/','');
+      let url = req.baseUrl.replace('admin/','');
+      url = url.replace('blog','content');
       cb(null, 'uploads' + url); // Upload directory
     },
     filename: (req, file, cb) => {

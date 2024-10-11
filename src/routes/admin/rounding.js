@@ -1,16 +1,16 @@
 const express = require('express');
 
-const settings = require('../../controllers/settings');
-const { checkAdminAuth } = require('../../middleware/auth')
+const rounding = require('../../controllers/rounding');
+const { checkListParam } = require('../../middleware/params');
 const {catchError} = require('../error');
 
 const router = express.Router();
 
-router.get('/', checkAdminAuth, catchError(settings.gets));
-router.post('/create', checkAdminAuth, catchError(settings.create));
-router.put('/', checkAdminAuth, catchError(settings.update));
-router.delete('/:_id', checkAdminAuth, catchError(settings.remove));
-router.post('/', checkAdminAuth, catchError(settings.removes));
-router.get('/:_id', checkAdminAuth, catchError(settings.get));
+router.get('/', checkListParam, catchError(rounding.gets));
+router.get('/:_id', catchError(rounding.get));
+router.post('/', catchError(rounding.create));
+router.put('/:_id', catchError(rounding.update));
+router.delete('/', catchError(rounding.removes));
+router.delete('/:_id', catchError(rounding.remove));
 
 module.exports = router;

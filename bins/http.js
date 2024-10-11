@@ -1,5 +1,7 @@
 const debug = require('debug')('myapp:server');
 const http = require('http');
+var socketio = require('socket.io');
+const chat = require('../src/controllers/chat');
 const app = require('../src/app');
 
 /**
@@ -80,6 +82,32 @@ server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
 
+// Initialize Socket.IO with the server
+const io = socketio(server, {
+  cors: {
+    origin: '*',
+  }
+});	
+
+// When a client connects
+chat.init(io);
+io.sockets.on('connection', function(socket) {
+  socket.on('login', function(_id){
+      chat.connect(socket, _id);
+  });
+  socket.on('logout', function() {
+    chat.disconnect(socket);        
+  });
+  socket.on('message', function(_id, msg) {
+    chat.send_dm_message(socket, _id, msg);        
+  });
+  socket.on('broadcast', function(_id, msg) {
+    chat.broadcast(socket, _id, msg);        
+  });
+  socket.on('disconnect', () => {
+    chat.disconnect(socket);
+  })
+});
 module.exports = {
   server,
 };

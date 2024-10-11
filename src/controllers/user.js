@@ -2,13 +2,18 @@ const crypto = require('crypto');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const Settings = require('../models/settings');
+const Club = require('../models/club');
+const Blog = require('../models/blog');
 const api = require('../configs/api');
 const { syslog } = require('../helpers/systemlog');
 const { SystemActionType } = require('../constants/type');
 
 const {
     create: createUser,
+    get_profile,
 } = require('../helpers/user');
+const { UserHidenField } = require('../constants/security');
 
 const SECTION = 'user';
 const signup = async(req, res) => {
@@ -70,14 +75,7 @@ const gets = async (req, res) => {
             $match: {$and: query},
         },
         {
-            $project: {
-                access: 0,
-                role: 0,
-                salt: 0,
-                hash: 0,
-                deleted: 0,
-                __v: 0,
-            }
+            $project: UserHidenField
         },
         {
             $limit: limit, 
@@ -140,14 +138,7 @@ const removes = async (req, res) => {
 
 const get = async (req, res) => {
     const { _id } = req.params;
-    const _user = await User.findOne({_id}, {
-        access: 0,
-        role: 0,
-        salt: 0,
-        hash: 0,
-        deleted: 0,
-        __v: 0,
-    }).catch(err => console.log(err.message));
+    const _user = await User.findOne({_id}, UserHidenField).catch(err => console.log(err.message));
     if (!_user) {
         return res.status(400).send({
             status: false,
@@ -217,12 +208,36 @@ const logout = async(req, res) => {
     })
 };
 
+// get my profile
 const me = async (req, res) => {
     const { currentUser } = req;
+    const {status, profile} = await get_profile(currentUser._id);
+    if (!status) {
+        return res.status(400).send({
+            status,
+            error: 'there is no such user'
+        })
+    }
     return res.send({
-        status: true,
-        data: currentUser,
-    })
+        status,
+        data: profile,
+    });
+};
+
+// get my profile
+const profile = async (req, res) => {
+    const { _id } = req.params;
+    const {status, profile} = await get_profile(_id);
+    if (!status) {
+        return res.status(400).send({
+            status,
+            error: 'there is no such user'
+        })
+    }
+    return res.send({
+        status,
+        data: profile,
+    });
 };
 
 const changePassword = async (req, res) => {
@@ -272,6 +287,7 @@ module.exports = {
     signup,
     update,
     me,
+    profile,
     changePassword,
     forgot,
 }

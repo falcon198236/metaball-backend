@@ -1,29 +1,46 @@
 const fs = require('fs');
 const Club = require('../models/club');
-const { default: mongoose } = require('mongoose');
+const { mongoose } = require('mongoose');
+const { SystemActionType } = require('../constants/type');
+const User = require('../models/user');
 
 const create = async(req, res) => {
+    const {currentUser} = req;
     const _files = req.files?.map(f => f.path);
-    const data = {
-        ... req.body,
+    if (currentUser.role == 2) {
+        req.body.user = currentUser._id;
+    } else {
+        if (!req.body.user) {
+            return res.status(400).send({
+                status: false,
+                error: 'not selected owner',    
+            })
+        }
+        req.body.user = new mongoose.Types.ObjectId(req.body.user);
     }
-    if(_files?.length) data.logo = _files[0];
-    const club = new Club({data});
+    req.body.member_ids = [req.body.user]; // add owner as a member
+    if(_files?.length) req.body.logo = _files[0];
+
+    const club = new Club({...req.body});
     const result = await club.save().catch(err => {
         return res.status(400).send({
-            status,
+            status: false,
             error: err.message,
         })
     });
-    return res.send({ status: true, data: {result} });
+    return res.send({ status: true, data: result });
 };
 
 const update = async(req, res) => {
+    const { currentUser } = req;
     const { _id } = req.params;
     const _files = req.files?.map(f => f.path);
     const club = await Club.findOne({_id}).catch(err=> console.log(err.message));
-    if (!user) {
-        return res.status(400).send({status: false, error: 'there is no club'});
+    if (currentUser.role === 2 && club.user.toString() !== currentUser._id.toString()) {
+        return res.status(400).send({
+            status: false,
+            error: `you can't update because you are not the owner of this club.`,
+        })
     }
     if (_files?.length) {
         if (club.logo) {
@@ -41,25 +58,24 @@ const update = async(req, res) => {
             error: err.message,
         })
     });
-    return res.send({status: true, data: {result}});
+    return res.send({status: true, data: result});
 };
 
 const gets = async (req, res) => {
     const { key, limit, skip } = req.query;
-    const query = [{createdAt: {$gte: new Date('2000-1-1')}}];
+    const query = [{created_at: {$gte: new Date('2000-1-1')}}];
     if (key)
         query.push({name: {$regex: `${key}.*`, $options:'i' }});
-    
     const count = await Club.countDocuments({$and: query});
     const clubs = await Club.aggregate([
         {
             $match: {$and: query},
         },
         {
-            $limit: parseInt(limit), 
+            $limit: limit, 
         },
         {
-            $skip: parseInt(skip)
+            $skip: skip,
         }
     ]);
 
@@ -87,13 +103,13 @@ const remove = async (req, res) => {
             error: err.message,
         });
     });
-    return res.send({status: true, data: {result}});
+    return res.send({status: true, data: result});
 };
 
 const removes = async (req, res) => {
-    const { _ids } = req.body;
+    const { ids } = req.body;
     
-    const clubs = await Club.find({_id: {$in: _ids}}).catch(err => console.log(err.message));
+    const clubs = await Club.find({_id: {$in: ids}}).catch(err => console.log(err.message));
     clubs.forEach(u => {
         if (u['logo']) {
             if(fs.existsSync(u['logo'])) {
@@ -102,13 +118,13 @@ const removes = async (req, res) => {
         }   
     });
 
-    const result = await Club.deleteMany({_id: {$in: _ids}}).catch(err => {
+    const result = await Club.deleteMany({_id: {$in: ids}}).catch(err => {
         return res.status(201).send({
             status: false,
             error: err.message,
         });
     });
-    return res.send({status: true, data: {result}});
+    return res.send({status: true, data: result});
 };
 
 const get = async (req, res) => {
@@ -122,30 +138,8 @@ const get = async (req, res) => {
     }
     return res.send({
         status: true,
-        data: {
-            club,
-        },
+        data: club,
     })
-};
-
-
-// functions for Clients
-const createOwn = async(req, res) => {
-    const { currentUser } = req;
-    const _files = req.files?.map(f => f.path);
-    const data = {
-        ... req.body,
-        user: currentUser._id,
-    }
-    if(_files?.length) data.logo = _files[0];
-    const club = new Club({data});
-    const result = await club.save().catch(err => {
-        return res.status(400).send({
-            status,
-            error: err.message,
-        })
-    });
-    return res.send({ status: true, data: {result} });
 };
 
 
@@ -187,10 +181,10 @@ const getMyClubs = async (req, res) => {
             }
         },
         {
-            $limit: limit? parseInt(limit) : 10, 
+            $limit: limit, 
         },
         {
-            $skip: skip? parseInt(skip) : 0
+            $skip: skip,
         },
     ]);
     return res.send({
@@ -202,6 +196,7 @@ const getMyClubs = async (req, res) => {
 const getMeInClubs = async (req, res) => {
     const { currentUser } = req;
     const { limit, skip } = req.query;
+    console.log('curr-------', currentUser._id);
     const clubs = await Club.aggregate([
         {
             $match: {
@@ -299,10 +294,26 @@ const getRequestClubs = async (req, res) => {
     })
 };
 
-const addMember = async (req, res) => {
+const getMembers = async (req, res) => {
     const { currentUser } = req;
-    const { club: _id, member: member_id } = req.body;
-    const club = await Club.findOne({_id}).catch(err => console.log(err.message));
+    const { _id } = req.params;
+    const club = await Club.findOne({_id, user: currentUser._id}).catch(err => console.log(err.message));
+    if (!club) {
+        return res.status(400).send({
+            status: false,
+            error: 'there is no such club.',
+        })
+    }
+    const users = await User.find({_id: {$in: club.member_ids}}).catch(err=>console.log(err.message));
+    return res.send({
+        status: true,
+        data: users,
+    })
+};
+const addMembers = async (req, res) => {
+    const { currentUser } = req;
+    const { club: _id, member_ids: _member_ids } = req.body;
+    const club = await Club.findOne({_id, user: currentUser._id}).catch(err => console.log(err.message));
     if (!club) {
         return res.status(400).send({
             status: false,
@@ -310,22 +321,30 @@ const addMember = async (req, res) => {
         })
     }
 
-    const a = club.member_ids.findIndex(member => member.toString() == member_id);
-    if (a >=0) {
-        return res.status(201).send({
-            status: false,
-            error: 'already added the user as member in this club',
-        })
-    }
-    const b = club.request_member_ids?.findIndex(member => member.toString() == member_id);
-    if (b >=0) {
-        club.request_member_ids.splice(b, 1);
-    }
-    club.member_ids.push(mongoose.Types.ObjectId(member_id));
+    const request_member_ids = club.request_member_ids;
+    const member_ids = club.member_ids;
+    const already_added_ids = [];
+    const added_ids = [];
+    console.log(request_member_ids);
+    console.log(_member_ids);
+    _member_ids.forEach(id => {
+        const b = request_member_ids?.findIndex(member => member.toString() == id);
+        if (b >=0) { 
+            // remove id from request list
+            request_member_ids.splice(b, 1);
+        }
+        const c = member_ids?.findIndex(member => member.toString() == id);
+        if (c >= 0) {
+            already_added_ids.push(new mongoose.Types.ObjectId(id));
+        }else {
+            added_ids.push(new mongoose.Types.ObjectId(id));
+            member_ids.push(new mongoose.Types.ObjectId(id));
+        }
+    });
     const result = await Club.updateOne({_id}, {
         $set: {
-            member_ids: club.member_ids,
-            request_member_ids: club.request_member_ids,
+            member_ids,
+            request_member_ids,
         }
     }).catch(err => {
         return res.status(400).send({
@@ -336,34 +355,38 @@ const addMember = async (req, res) => {
     return res.send({
         status: true,
         data: {
-            result
+            already_added_ids,
+            added_ids,
         },
     })
 };
 
-const removeMember = async (req, res) => {
+const removeMembers = async (req, res) => {
     const { currentUser } = req;
-    const { club: _id, member: member_id } = req.body;
-    const club = await Club.findOne({_id}).catch(err => console.log(err.message));
+    const { club: _id, member_ids: _member_ids } = req.body;
+    const club = await Club.findOne({_id, user: currentUser._id}).catch(err => console.log(err.message));
     if (!club) {
         return res.status(400).send({
             status: false,
             error: 'there is no such club.',
         })
     }
-
-    const a = club.member_ids.findIndex(member => member.toString() == member_id);
-    if (a < 0) {
-        return res.status(201).send({
-            status: false,
-            error: 'there is no user as member in this club',
-        })
-    }
-    club.member_ids.splice(b, 1);
-
-    const result = await Club.updateOne({_id}, {
+    const deletes_ids = [];
+    const member_ids = club.member_ids;
+    _member_ids.forEach(id => {
+        if(id !== currentUser.id) {
+            const b = member_ids?.findIndex(member => member.toString() == id);
+            console.log(b, id);
+            if (b >=0) {
+                member_ids.splice(b, 1);
+                deletes_ids.push(id);
+            }
+        }
+    });
+    
+    await Club.updateOne({_id}, {
         $set: {
-            member_ids: club.member_ids,
+            member_ids,
         }
     }).catch(err => {
         return res.status(400).send({
@@ -373,9 +396,7 @@ const removeMember = async (req, res) => {
     });
     return res.send({
         status: true,
-        data: {
-            result
-        },
+        data: deletes_ids,
     })
 };
 
@@ -425,11 +446,11 @@ module.exports = {
     gets,
 
     // functions for Client
-    createOwn,          // Add my club
     getMyClubs,         // My clubs
     getMeInClubs,       // clubs that I am as member
     getRequestClubs,    // Clubs that I request.
-    addMember,          // Add a member
-    removeMember,       // Remove a member
+    getMembers,
+    addMembers,          // Add a member
+    removeMembers,       // Remove a member
     cancelRequestMember,    // Cancel a request .
 }

@@ -11,8 +11,13 @@ const ContentType = {
     NOTIFICATION: 'notification', //알람
     NOTE: 'note', //공지사항
     NEWS: 'news', //뉴스
+    BLOG: 'blog', //BLOG
 };
 
+const BlogFilterType = {
+    MINE: 'mine',
+    REVIEWS: 'reviews',
+}
 const SettingsType = {
     SCORE: 'score', // 평규 타수 관리, hit
     EXPERIENCE: 'experience',  // 골프 경력, experience
@@ -30,11 +35,18 @@ const SystemActionType = {
     RESET_PASSOWRD: 'reset password',
 };
 
+const RoundingRequestType = {
+    REQUEST_USER: 'user',
+    REQUEST_OWNER: 'owner',
+}
+
 
 module.exports = {
     FollowType,
     SettingsType,
     RoundingMakeType,
     ContentType,
+    BlogFilterType,
     SystemActionType,
+    RoundingRequestType,
 }

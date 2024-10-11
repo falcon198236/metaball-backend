@@ -4,19 +4,14 @@ const Schema = mongoose.Schema;
 
 const ReviewSchema = new Schema(
   {
-    name: String,
+    content: String,
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
-    who: { type: mongoose.Schema.Types.ObjectId },
-    type: String, // person, club, event, .......
-    intro: String,
-    files: [{type: String}],
+    blog: { type: mongoose.Schema.Types.ObjectId, ref: 'content' },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
   }
 );
-
-ReviewSchema.index({ nick_name: 1 });
 
 const Review = mongoose.model('review', ReviewSchema);
 

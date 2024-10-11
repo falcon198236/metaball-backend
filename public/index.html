@@ -1,0 +1,261 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <!--[if IE]>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <![endif]-->
+        <title>REALTiME CHAT RooMs</title>
+        <!-- BOOTSTRAP CORE STYLE CSS -->
+        <link href="css/bootstrap.css" rel="stylesheet" />
+        <script type="text/javascript" src="js/jquery.js"></script>
+
+        <style>
+        .board{
+         height: 32em;
+         overflow: auto;
+     }
+     .servernote{
+        padding-top: 5px;
+        padding-bottom: 5px;
+     }
+
+     </style>
+ </head>
+ <body>
+    <div class="navbar-wrapper">
+      <div class="container">
+        <nav class="navbar navbar-default navbar-static-top">
+          <div class="container">
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="">Instant Chat</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Room Manarola</a></li>
+            <li><a href="#">Room Amalfi</a></li>
+            <li><a href="#">Room Garda</a></li>
+
+        </ul>
+
+    </div>
+
+</div>
+</nav>
+</div>
+</div>
+
+<div class="container">
+
+
+    <div class="col-md-3">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+             My Chat Name
+         </div>
+         <div class="panel-body">
+
+          <div class="col-lg-12">
+            <div class="input-group">
+              <input  id="myName" value="66df0b1d5dfaebf678791382" type="text" class="form-control">
+              <P>
+              <span class="input-group-btn">
+                <button id="confirmName"  class="btn btn-default"  type="button">Connect</button>
+                </span>
+                <span class="input-group-btn">
+                <button id="disconnectBtn"  class="btn btn-default"  type="button">disconnect</button>
+                </span>
+            
+        </div><!-- /input-group -->
+    </div><!-- /.col-lg-6 -->
+
+</div>
+</div>
+
+<div class="panel panel-primary">
+    <div class="panel-heading">
+     ONLINE USERS
+ </div>
+ <div class="panel-body">
+    <ul class="media-list connected-list">
+        <li>
+            <span class="glyphicon glyphicon-user"> </span> Alex Deo
+            <small class="text-muted">joined at ...</small>
+        </li>
+    </ul>
+    <hr />
+</div>
+</div>
+
+</div>
+
+<div class="col-md-8">
+    <div class="panel panel-info">
+
+        <div class="panel-heading">
+            INSTANT MESSAGE BOARD
+        </div>
+        <div class="panel-body board-wrapper">
+            <ul class="media-list board">
+
+                <li class="maxtes">
+                    <div>
+                        <span class="glyphicon glyphicon-user"> </span>
+                        <span class="text-muted">Admin | Announcement</span>
+                    </div>
+                    <div class="well" >
+                        Welcome to the istant message chat room, this web app is implemented by Node.js, Socket.io, Express, Bootstrap, jQuery and PHP.
+                    </div>
+                </li>
+
+
+
+            </ul>
+        </div>
+
+
+        <div class="panel-footer">
+            <form class="input-group">
+                <input id="m" type="text" class="form-control" placeholder="Enter Message" />
+                <span class="input-group-btn">
+                    <input type="submit" class="btn btn-info send" type="button">SEND</input>
+                </span>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+
+</div>
+
+
+<script type="text/javascript"  src="js/script.js"></script>
+<!--<script src="node_modules/socket.io/node_modules/socket.io-client/socket.io.js"></script>-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.3/socket.io.min.js"></script>
+<script>
+
+var socket = io.connect('http://localhost:3000');// 'http://localhost:8080' );
+var cache = {"Room Manarola":[],"Room Amalfi":[],"Room Garda":[]};
+var currentRoom = 'Room Manarola';
+
+      // socket.emit('chat message', 'new user connected ... ');
+
+      //send message
+      $('form').submit(function(){
+
+        socket.emit('message', ["falcon01", "falcon02"], $('#m').val());
+        $('#m').val('');
+        
+    // Ajax call for saving datas
+    // $.ajax({
+    //     url: "./ajax/insertNewMessage.php",
+    //     type: "POST",
+    //     data: { name: nameVal, message: msg },
+    //     success: function(data) {
+
+    //     }
+    // });
+      return false;
+  });
+
+      // send change name
+        $('#confirmName').click(function(){
+            var name = $("#myName").val();
+            socket.connect();
+            socket.emit('login', name, "1");
+
+        })
+        $('#disconnectBtn').click(function(){
+            var name = $("#myName").val();
+            socket.emit('logout', name, "1");
+            $(".connected-list li").remove();
+        })
+      // send switch room
+      $(".nav li").click(function(){
+
+          // nav bar item
+          $(".nav li").removeClass("active");
+          $(this).addClass("active");
+          var roomName = $(this).find("a").text();
+          socket.emit('room', roomName);
+
+          currentRoom =roomName;
+
+          //display old messages
+          $('.board li').remove();
+          var oldmsg = cache[currentRoom];
+          for (var i = 0; i < oldmsg.length; i++) {
+              var msg = oldmsg[i];
+              var msghtm = "<li><div><span class='glyphicon glyphicon-user'></span> <span class='text-muted'>"+
+              ""+msg.name+" | "+msg.time+"</span></div>"+
+              "<div class='well'>"+msg.message+"</div></li>";
+              $('.board').append(msghtm);
+          };
+      })
+
+
+      // Receives Chat Message
+      socket.on('message', function(from, msg){
+        
+        //display msg
+        var msghtm = "<li><div><span class='glyphicon glyphicon-user'></span> <span class='text-muted'>"+
+        ""+from+" | "+new Date()+"</span></div>"+
+        "<div class='well'>"+msg+"</div></li>";
+        $('.board').append(msghtm);
+
+        // keep in windon buttom
+        $(".board").animate({scrollTop:400000},1);
+
+        // update cache
+        cache[currentRoom].push(msg);
+
+    });
+
+    socket.on('400', function(msg) {
+        console.log('-----------', msg);
+        var msghtm = "<li><div class='servernote'><span class='glyphicon glyphicon-bell'></span> <span class='text-muted'>"+
+        "SERVER: "+msg+"</span></div></li>";
+        $('.board').append(msghtm);
+
+        $(".board").animate({scrollTop:400000},1);
+    })
+      // Receives SERVER FEED
+    socket.on('200', function(msg){
+        console.log('-----------', msg);
+        // var msghtm = "<li><div><span class='glyphicon glyphicon-user'></span> <span class='text-muted'>"+
+        // "SERVER </span></div>"+
+        // "<div class='well'>"+msg+"</div></li>";
+        var msghtm = "<li><div class='servernote'><span class='glyphicon glyphicon-bell'></span> <span class='text-muted'>"+
+        "SERVER: "+msg+"</span></div></li>";
+        $('.board').append(msghtm);
+
+        $(".board").animate({scrollTop:400000},1);
+    });
+
+      // Receives User list
+      socket.on('connected users', function(arr){
+        console.log(arr);
+        $(".connected-list li").remove();
+        for (var i = 0; i < arr.length ; i++) {
+            var user = arr[i];
+            var name = user;
+            var tmp = "<li> <span class='glyphicon glyphicon-user'> </span> "+name+"  </li>";
+            $(".connected-list").append(tmp);
+        };
+
+    });
+
+
+      </script>
+  </body>
+  </html>

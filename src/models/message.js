@@ -4,10 +4,10 @@ const Schema = mongoose.Schema;
 
 const MessageSchema = new Schema(
   {
-    message: String,
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
-    target: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
-    club: { type: mongoose.Schema.Types.ObjectId, ref: 'club' },
+    msg: String,
+    from_user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
+    to_user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
+    club: { type: mongoose.Schema.Types.ObjectId, ref: 'club' }, // club message
     files: [{type: String}],
   },
   {
@@ -17,6 +17,6 @@ const MessageSchema = new Schema(
 
 MessageSchema.index({ user: 1 });
 
-const Message = mongoose.model('content', MessageSchema);
+const Message = mongoose.model('message', MessageSchema);
 
 module.exports = Message;

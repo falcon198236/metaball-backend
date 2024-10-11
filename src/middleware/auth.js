@@ -23,6 +23,7 @@ const checkAuth = async (req, res, next) => {
   }).catch((err) => {
     console.log('err', err);
   });
+  console.log('user:[', req.currentUser.id, '] [', req.currentUser.email, '] - ', req.originalUrl);
   if (req.currentUser) {
       next();
   } else {

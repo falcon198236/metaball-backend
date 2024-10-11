@@ -14,8 +14,8 @@ const { DB_PORT } = require('./configs/database');
 mongoose.set('strictQuery', false);
 mongoose
   .connect(DB_PORT, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+    // useNewUrlParser: true,
+    // useUnifiedTopology: true,
   })
   .then(() => {
     console.log('Connecting to database successful');

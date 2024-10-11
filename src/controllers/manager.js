@@ -192,7 +192,7 @@ const get = async (req, res) => {
     }
     return res.send({
         status: true,
-        data: manager,
+        data: _manager,
     })
 };
 
