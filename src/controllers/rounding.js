@@ -2,8 +2,9 @@ const mongoose = require('mongoose');
 const Rounding = require('../models/rounding');
 const RoundingMembers = require('../models/rounding_members');
 const User = require('../models/user');
-const { UserHidenField } = require('../constants/security')
+const { UserHidenField } = require('../constants/security');
 const { RoundingRequestType } = require('../constants/type');
+const { getRoundings } = require('../helpers/rounding');
 
 // create a rounding
 const create = async(req, res) => {
@@ -108,31 +109,34 @@ const get = async (req, res) => {
                 select: UserHidenField
             })
             .catch(err => console.log(err.message));
-    const request_user = [];
-    const request_owner = [];
+    const request_users = [];
+    const invited_users = [];
     const allowed_users = [];
-    console.log
     rounding_members.forEach(e => {
         if(e.enabled) {
             allowed_users.push(e);
         }else {
             switch (e.enter_type) {
                 case RoundingRequestType.REQUEST:
-                    request_user.push(e);
+                    request_users.push(e);
                     break;
                 case RoundingRequestType.INVITE:
-                    request_owner.push(e);
+                    invited_users.push(e);
                     break;
             }
         }
         
-    })
+    });
+
     return res.send({
         status: true,
         data: {
-            rounding,
-            request_owner,
-            request_user,
+            rounding: {
+                ...rounding._doc,
+                members_count: allowed_users.length,
+            },
+            request_users,
+            invited_users,
             allowed_users,
         },
     })
@@ -144,9 +148,15 @@ const get_mine = async (req, res) => {
     const { currentUser } = req;
     const { limit, skip } = req.query;
     const today = new Date();
-    console.log(today);
-    const roundings = await Rounding.find({user: currentUser._id, opening_date: {$gte: today}}).catch(err => console.log(err.message));
-    return res.send({ status: true, data: roundings });
+    const query = {user: currentUser._id, opening_date: {$gte: today}};
+    const {count, roundings} = await getRoundings(query, limit, skip);
+    return res.send({ 
+        status: true, 
+        data: {
+            count,
+            roundings,
+        }
+    });
 };
 
 // get the roundings to proceed on the selected date.
@@ -155,23 +165,20 @@ const get_date = async (req, res) => {
     const _date = new Date(date);
     const start_date = new Date(_date.setHours(0,0,0, 0));
     const end_date = new Date(_date.setHours(23,59,59, 999));
-    const roundings = await Rounding.aggregate([
-        {
-            $match: {
-                opening_date: {
-                $gte: start_date,
-                $lt: end_date,
-            }},
-        },
-        {
-            $limit: limit, 
-        },
-        {
-            $skip: skip,
-        },
-    ]).catch(err => console.log(err.message));
-    
-    return res.send({status: true, data: roundings});
+    const query = {
+            opening_date: {
+            $gte: start_date,
+            $lt: end_date,
+        }
+    };
+    const {count, roundings} = await getRoundings(query, limit, skip);
+    return res.send({
+        status: true, 
+        data: {
+            count,
+            roundings
+        }
+    });
 };
 
 // get roundings to proceed recently
@@ -183,24 +190,7 @@ const get_recent = async (req, res) => {
             $gte: start_date,
         }
     };
-    const count = await Rounding.countDocuments(query);
-    const roundings = await Rounding.aggregate([
-        {
-            $match: query,
-        },
-        {
-            $limit: limit, 
-        },
-        {
-            $skip: skip
-        },
-        {
-            $sort: {
-                opening_date: -1,
-            }
-        },
-    ]).catch(err => console.log(err.message));
-    
+    const {count, roundings} = await getRoundings(query);
     return res.send({status: true, data: 
         {
             count,
@@ -296,8 +286,6 @@ const request_rounding = async(req, res) => {
         })
     }else {
         let error = ""
-        console.log('=========', _rounding_member);
-        
         if (_rounding_member.enabled) {
             error = 'You have already joined this rounding.';
         }

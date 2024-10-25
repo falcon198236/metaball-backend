@@ -188,9 +188,10 @@ const login = async(req, res) => {
         email: user.email,
         phone: user.phone
     };
-    const token = jwt.sign(payload, api.SECURITY_KEY, {
-        expiresIn: 86400 // expires in 24 hours //86400
-    });
+    // const token = jwt.sign(payload, api.SECURITY_KEY, {
+    //     expiresIn: 86400 // expires in 24 hours //86400
+    // });
+    const token = jwt.sign(payload, api.SECURITY_KEY);
     user.last_login_at = new Date();
     const _user = { ...user._doc, last_login_at: new Date};
     await User.replaceOne({_id: user._id}, _user, { upsert: true }).catch(err => console.log(err));
