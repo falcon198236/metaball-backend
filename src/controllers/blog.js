@@ -109,15 +109,26 @@ const get = async (req, res) => {
         {
             $lookup: {
                 from: 'settings',
-                localField: 'theme_id',
+                localField: 'theme_ids',
                 foreignField: "_id",
-                as: "theme_info"
+                as: "theme_infos"
             }
         },
         {
             $unwind: {
-              path: "$theme_info",
+              path: "$theme_infos",
               preserveNullAndEmptyArrays: true // Optional: keep users without an order
+            }
+        },
+        {
+            $group: {                               // Group back by user
+                _id: "$_id",
+                title: {$first: "$title"},
+                files: {$first: "$files"},
+                introduction: {$first: "$introduction"},
+                theme_infos: { $push: "$theme_infos" },
+                created_at: {$first: "$created_at"},
+                updated_at: {$first: "$updated_at"}
             }
         },
         {
@@ -157,15 +168,26 @@ const get_mine = async (req, res) => {
         {
             $lookup: {
                 from: 'settings',
-                localField: 'theme_id',
+                localField: 'theme_ids',
                 foreignField: "_id",
-                as: "theme_info"
+                as: "theme_infos"
             }
         },
         {
             $unwind: {
-              path: "$theme_info",
+              path: "$theme_infos",
               preserveNullAndEmptyArrays: true // Optional: keep users without an order
+            }
+        },
+        {
+            $group: {                               // Group back by user
+                _id: "$_id",
+                title: {$first: "$title"},
+                files: {$first: "$files"},
+                introduction: {$first: "$introduction"},
+                theme_infos: { $push: "$theme_infos" },
+                created_at: {$first: "$created_at"},
+                updated_at: {$first: "$updated_at"}
             }
         },
         {
@@ -200,15 +222,26 @@ const get_others = async (req, res) => {
         {
             $lookup: {
                 from: 'settings',
-                localField: 'theme_id',
+                localField: 'theme_ids',
                 foreignField: "_id",
                 as: "theme_info"
             }
         },
         {
             $unwind: {
-              path: "$theme_info",
+              path: "$theme_infos",
               preserveNullAndEmptyArrays: true // Optional: keep users without an order
+            }
+        },
+        {
+            $group: {                               // Group back by user
+                _id: "$_id",
+                title: {$first: "$title"},
+                files: {$first: "$files"},
+                introduction: {$first: "$introduction"},
+                theme_infos: { $push: "$theme_infos" },
+                created_at: {$first: "$created_at"},
+                updated_at: {$first: "$updated_at"}
             }
         },
         {

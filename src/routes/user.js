@@ -15,7 +15,6 @@ router.get('/:_id', checkAuth, catchError(user.profile));
 
 router.put('/', checkAuth, upload.array('files', 1), catchError(user.update));
 
-router.post('/logout', checkAuth, catchError(user.logout));
 router.post('/pwd', checkAuth, catchError(user.changePassword));
 
 router.post('/forgot', checkAuth, catchError(user.forgot));

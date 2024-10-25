@@ -1,27 +1,31 @@
 const mongoose = require('mongoose');
 const { appdb } = require('../db');
 const { Socket } = require('socket.io');
+const string = require('@hapi/joi/lib/types/string');
 
 const Schema = mongoose.Schema;
 
 const UserSchema = new Schema(
   {
-    fullname: String,
-    nickname: String,
+    fullname: {type: String, default: ''},
+    nickname: {type: String, default: ''},
 
     email: {
       type: String,
       required: true,
-      unique: true  // Ensure email is unique
+      unique: true,  // Ensure email is unique
+      default: '',
     },
-    birthday: Date,
+    birthday: {type: Date, default: new Date('2000-1-1 0:0:0')},
     sex: String, //m: man, w: woman
     hash: String,
     salt: String,
-    phone: String,
-    logo: String,
-    address: String,
-    introduction: String,
+    phone: {type: String, default: ''},
+    logo: {type: String, default: ''},
+    address: {type: String, default: ''},
+    introduction: {type: String, default: ''},
+    occupation: {type: String, default: ''},
+    occupation: {type: String, default: ''},
     themes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'settings' }],
     accesses: [{type: mongoose.Schema.Types.ObjectId, ref: 'access'}], //only for admin
     experience_years: { //高尔夫历

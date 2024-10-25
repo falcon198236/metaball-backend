@@ -8,7 +8,8 @@ const BlogSchema = new Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     files: [{type: String}],
     introduction: String,
-    theme_id: { type: mongoose.Schema.Types.ObjectId, ref: 'settings'}, // only for blog      
+    // theme_id: { type: mongoose.Schema.Types.ObjectId, ref: 'settings'}, // only for blog      
+    theme_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'settings'}], // only for blog      
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

@@ -97,13 +97,13 @@ const get = async (req, res) => {
 };
 
 // it should be used on client side
-const get_type_theme = async (req, res) => {
-    const data = await Settings.find({type: SettingsType.THEME}).sort({title: 1}).catch(err=>console.log(err.message));
+const get_type_hit = async (req, res) => {
+    const data = await Settings.find({type: SettingsType.HIT}).sort({title: 1}).catch(err=>console.log(err.message));
     return res.send({status: true, data});
 };
 
-const get_type_score = async (req, res) => {
-    const data = await Settings.find({type: SettingsType.SCORE}).sort({title: 1}).catch(err=>console.log(err.message));
+const get_type_theme = async (req, res) => {
+    const data = await Settings.find({type: SettingsType.THEME}).sort({title: 1}).catch(err=>console.log(err.message));
     return res.send({status: true, data});
 };
 
@@ -121,7 +121,7 @@ module.exports = {
     get,
     gets,
 
-    get_type_score,
+    get_type_hit,
     get_type_experience,
     get_type_theme,
 }

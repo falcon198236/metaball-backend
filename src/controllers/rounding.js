@@ -116,11 +116,11 @@ const get = async (req, res) => {
         if(e.enabled) {
             allowed_users.push(e);
         }else {
-            switch (e.request_type) {
-                case RoundingRequestType.REQUEST_USER:
+            switch (e.enter_type) {
+                case RoundingRequestType.REQUEST:
                     request_user.push(e);
                     break;
-                case RoundingRequestType.REQUEST_USER:
+                case RoundingRequestType.INVITE:
                     request_owner.push(e);
                     break;
             }
@@ -261,7 +261,7 @@ const get_gather_users = async (req, res) => {
 };
 
 // user request the rounding
-const request_rounding_user = async(req, res) => {
+const request_rounding = async(req, res) => {
     const { currentUser } = req; // currentUser is a general user
     const { _id: rounding_id } = req.body;
     const rounding = await Rounding.findOne({_id: rounding_id}).catch(err => console.log(err.message));
@@ -282,7 +282,7 @@ const request_rounding_user = async(req, res) => {
         const rounding_member = new RoundingMembers({
             user: currentUser._id,
             rounding: new mongoose.Types.ObjectId(rounding_id),
-            type: RoundingRequestType.REQUEST_USER,
+            type: RoundingRequestType.REQUEST,
         });
         const result = await rounding_member.save().catch(err => {
             return res.status(400).send({
@@ -296,16 +296,18 @@ const request_rounding_user = async(req, res) => {
         })
     }else {
         let error = ""
+        console.log('=========', _rounding_member);
+        
         if (_rounding_member.enabled) {
             error = 'You have already joined this rounding.';
         }
         else {
             switch(_rounding_member.request_type) {
-            case RoundingRequestType.REQUEST_USER:
+            case RoundingRequestType.REQUEST:
                 error = 'you did already request on this rounding';
                 break;
-            case RoundingRequestType.REQUEST_OWNER:
-                error = 'the owner of rounding send the request to you. please allow the request';
+            case RoundingRequestType.INVITE:
+                error = 'the uer already was invited';
                 break;
             }
         }
@@ -316,16 +318,17 @@ const request_rounding_user = async(req, res) => {
     }
 };
 
-// the owner of rounding request a user
-const request_rounding_owner = async(req, res) => {
+// invite a user on rounding (user should be owner or manager)
+const invite_rounding = async(req, res) => {
     const { currentUser } = req; // currentUser is the owner of Rounding
-    const { _id: rounding_id } = req.body;
-    const _rounding_member = await RoundingMembers.findOne({user: currentUser._id, rounding: rounding_id}).catch(err => console.log(err.message));
+    const { _id: rounding_id, toUser } = req.body;
+    const _rounding_member = await RoundingMembers.findOne({toUser, rounding: rounding_id}).catch(err => console.log(err.message));
     if (!_rounding_member) {
         const rounding_member = new RoundingMembers({
             user: currentUser._id,
             rounding: new mongoose.Types.ObjectId(rounding_id),
-            type: RoundingRequestType.REQUEST_OWNER,
+            request_type: RoundingRequestType.INVITE,
+            toUser: new mongoose.Types.ObjectId(toUser),
         });
         const result = await rounding_member.save().catch(err => {
             return res.status(400).send({
@@ -343,11 +346,11 @@ const request_rounding_owner = async(req, res) => {
             error = 'You have already joined this rounding.';
         } else {
             switch(_rounding_member.request_type) {
-                case RoundingRequestType.REQUEST_OWNER:
+                case RoundingRequestType.REQUEST:
                     error = 'you did already request to the user on this rounding';
                     break;
-                case RoundingRequestType.REQUEST_USER:
-                    error = 'the uer already sent the request to you. please allow the request';
+                case RoundingRequestType.INVITE:
+                    error = 'the uer already was invited';
                     break;
             }
         }
@@ -359,6 +362,81 @@ const request_rounding_owner = async(req, res) => {
     }
 };
 
+// get the roundings I request.
+const request_list_roundings = async(req, res) => {
+    const { currentUser } = req; // currentUser is a general user
+    const {limit, skip} = req.query;
+    const _roundings_members = await RoundingMembers.find({
+            user: currentUser._id, 
+            enabled: false,
+            request_type: RoundingRequestType.REQUEST,    
+        })
+        .catch(err => console.log(err.message));
+    const roundings_ids = _roundings_members.map((e)=>e.rounding);
+    const count = await Rounding.countDocuments({_id: {$in: roundings_ids}})
+    const _roundings = await Rounding.find({_id: {$in: roundings_ids}})
+        .populate({
+            path: 'user',
+            select: UserHidenField
+        })
+        .populate('club')
+        .skip(skip)
+        .limit(limit);
+    const roundings = [];
+    for(let i = 0; i < _roundings.length; i ++) {
+        const r = _roundings[i];
+        const count = await RoundingMembers.countDocuments({rounding: r._id, enabled: true});
+        const rounding = {...r._doc}
+        rounding.members_count = count;
+        roundings.push(rounding);
+    };
+    return res.send({
+        status: true,
+        data: {
+            count,
+            roundings,
+        }
+    })
+};
+
+// get the roundings I was invited.
+const invited_list_roundings = async(req, res) => {
+    const { currentUser } = req; // currentUser is a general user
+    const {limit, skip} = req.query;
+    const _roundings_members = await RoundingMembers.find({
+            toUser: currentUser._id, 
+            enabled: false,
+            request_type: RoundingRequestType.INVITE,
+        })
+        .catch(err => console.log(err.message));
+
+    const roundings_ids = _roundings_members.map((e)=>e.rounding);
+    const count = await Rounding.countDocuments({_id: {$in: roundings_ids}})
+    const _roundings = await Rounding.find({_id: {$in: roundings_ids}})
+        .populate({
+            path: 'user',
+            select: UserHidenField
+        })
+        .populate('club')
+        .skip(skip)
+        .limit(limit);
+    const roundings = [];
+    
+    for(let i = 0; i < _roundings.length; i ++) {
+        const r = _roundings[i];
+        const count = await RoundingMembers.countDocuments({rounding: r._id, enabled: true});
+        const rounding = {...r._doc}
+        rounding.members_count = count;
+        roundings.push(rounding);
+    };
+    return res.send({
+        status: true,
+        data: {
+            count,
+            roundings,
+        }
+    })
+};
 // user allow the request from the owner or user.
 const allow_request = async(req, res) => {
     const { currentUser } = req; 
@@ -410,8 +488,10 @@ module.exports = {
     get_date,
     get_recent,
     get_gather_users,
-    request_rounding_user,
-    request_rounding_owner,
+    request_list_roundings,
+    invited_list_roundings,
+    request_rounding,
+    invite_rounding,
     allow_request,
     remove_user,
 }

@@ -19,7 +19,7 @@ const BlogFilterType = {
     REVIEWS: 'reviews',
 }
 const SettingsType = {
-    SCORE: 'score', // 평규 타수 관리, hit
+    HIT: 'hit', // 평규 타수 관리, hit
     EXPERIENCE: 'experience',  // 골프 경력, experience
     THEME: 'theme',  // 인기 라운딩 테마 , theme
 };
@@ -36,8 +36,8 @@ const SystemActionType = {
 };
 
 const RoundingRequestType = {
-    REQUEST_USER: 'user',
-    REQUEST_OWNER: 'owner',
+    REQUEST: 'request',
+    INVITE: 'invite',
 }
 
 

@@ -111,7 +111,7 @@ const set_rounding = async (req, res) => {
     if (a >= 0) {
         return res.status(201).send({
             status: false,
-            error: 'you aleady followd him',
+            error: 'you aleady followd rounding',
         })    
     }
     const follow_rounding_ids = currentUser.follow_rounding_ids;

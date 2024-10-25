@@ -90,6 +90,7 @@ const gets = async (req, res) => {
 };
 
 const remove = async (req, res) => {
+    const { currentUser } = req;
     const { _id } = req.params;
     const user = await User.findOne({_id}).catch(err => console.log(err.message));
     if (!user) {
@@ -115,6 +116,7 @@ const remove = async (req, res) => {
 };
 
 const removes = async (req, res) => {
+    const { currentUser } = req;
     const { ids } = req.body;
     
     const users = await User.find({_id: {$in: ids}}).catch(err => console.log(err.message));
@@ -186,7 +188,9 @@ const login = async(req, res) => {
         email: user.email,
         phone: user.phone
     };
-    const token = jwt.sign(payload, api.SECURITY_KEY);
+    const token = jwt.sign(payload, api.SECURITY_KEY, {
+        expiresIn: 86400 // expires in 24 hours //86400
+    });
     user.last_login_at = new Date();
     const _user = { ...user._doc, last_login_at: new Date};
     await User.replaceOne({_id: user._id}, _user, { upsert: true }).catch(err => console.log(err));
@@ -203,6 +207,7 @@ const login = async(req, res) => {
 const logout = async(req, res) => {
     const {currentUser} = req;
     syslog(currentUser._id, SECTION, SystemActionType.LOGOUT);
+
     res.send({
         status: true,
     })
