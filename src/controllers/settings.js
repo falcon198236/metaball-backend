@@ -102,8 +102,15 @@ const get_type_hit = async (req, res) => {
     return res.send({status: true, data});
 };
 
-const get_type_theme = async (req, res) => {
+// user's themes
+const get_type_user_theme = async (req, res) => {
     const data = await Settings.find({type: SettingsType.THEME}).sort({title: 1}).catch(err=>console.log(err.message));
+    return res.send({status: true, data});
+};
+
+// user's themes
+const get_type_blog_theme = async (req, res) => {
+    const data = await Settings.find({type: SettingsType.BLOG}).sort({title: 1}).catch(err=>console.log(err.message));
     return res.send({status: true, data});
 };
 
@@ -123,5 +130,6 @@ module.exports = {
 
     get_type_hit,
     get_type_experience,
-    get_type_theme,
+    get_type_user_theme,
+    get_type_blog_theme,
 }

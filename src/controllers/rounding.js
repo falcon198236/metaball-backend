@@ -52,6 +52,48 @@ const gets = async (req, res) => {
             $match: {$and: query},
         },
         {
+            $lookup: {
+                from: 'settings',
+                localField: 'golf_themes',
+                foreignField: "_id",
+                as: "golf_themes_infos"
+            }
+        },
+        {
+            $unwind: {
+              path: "$golf_themes_infos",
+              preserveNullAndEmptyArrays: true // Optional: keep users without an order
+            }
+        },
+        {
+            $lookup: {
+                from: 'settings',
+                localField: 'golf_hit',
+                foreignField: "_id",
+                as: "golf_hit_infos"
+            }
+        },
+        {
+            $unwind: {
+              path: "$golf_hit_infos",
+              preserveNullAndEmptyArrays: true // Optional: keep users without an order
+            }
+        },
+        {
+            $lookup: {
+                from: 'settings',
+                localField: 'golf_experience',
+                foreignField: "_id",
+                as: "golf_experience_infos"
+            }
+        },
+        {
+            $unwind: {
+              path: "$golf_experience_infos",
+              preserveNullAndEmptyArrays: true // Optional: keep users without an order
+            }
+        },
+        {
             $limit: limit, 
         },
         {

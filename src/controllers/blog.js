@@ -11,6 +11,16 @@ const SECTION = 'blog';
 const create = async(req, res) => {
     const {currentUser} = req;
     const _files = req.files?.map(f => f.path);
+    const {theme_ids: _theme_ids} = req.body;
+    if(_theme_ids) {
+        if(Array.isArray(_theme_ids))
+        {
+            req.body.theme_ids = _theme_ids
+        }else {
+            const ids = _theme_ids.split(',');
+            req.body.theme_ids = ids;
+        }
+    }
     const blog = new Blog({
         user: currentUser._id,
         files: _files,
@@ -108,6 +118,20 @@ const get = async (req, res) => {
         },
         {
             $lookup: {
+                from: 'users',
+                localField: 'user',
+                foreignField: "_id",
+                as: "user_info"
+            }
+        },
+        {
+            $unwind: {
+              path: "$user_info",
+              preserveNullAndEmptyArrays: true // Optional: keep users without an order
+            }
+        },
+        {
+            $lookup: {
                 from: 'settings',
                 localField: 'theme_ids',
                 foreignField: "_id",
@@ -123,6 +147,7 @@ const get = async (req, res) => {
         {
             $group: {                               // Group back by user
                 _id: "$_id",
+                user: {$first: "$user_info"},
                 title: {$first: "$title"},
                 files: {$first: "$files"},
                 introduction: {$first: "$introduction"},
@@ -146,8 +171,8 @@ const get = async (req, res) => {
             data: blogs[0]
         })
     }
-    return res.send({
-        status: true,
+    return res.status(400).send({
+        status: false,
         data: 'there is no blog',
     })
 };
@@ -158,12 +183,26 @@ const get_mine = async (req, res) => {
     const { limit, skip, theme} = req.query;
     const query = [{ user: currentUser._id }];
     if (theme) {
-        query.push({theme_id: new mongoose.Types.ObjectId(theme)})
+        query.push({theme_ids: new mongoose.Types.ObjectId(theme)})
     }
     const count = await Blog.countDocuments({$and: query});
     const blogs = await Blog.aggregate([
         {
             $match: {$and: query},
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'user',
+                foreignField: "_id",
+                as: "user_info"
+            }
+        },
+        {
+            $unwind: {
+              path: "$user_info",
+              preserveNullAndEmptyArrays: true // Optional: keep users without an order
+            }
         },
         {
             $lookup: {
@@ -182,6 +221,7 @@ const get_mine = async (req, res) => {
         {
             $group: {                               // Group back by user
                 _id: "$_id",
+                user: {$first: "$user_info"},
                 title: {$first: "$title"},
                 files: {$first: "$files"},
                 introduction: {$first: "$introduction"},
@@ -212,7 +252,7 @@ const get_others = async (req, res) => {
     const { limit, skip, theme} = req.query;
     const query = [{ user: {$ne: currentUser._id} }];
     if (theme) {
-        query.push({theme_id: new mongoose.Types.ObjectId(theme)})
+        query.push({theme_ids: new mongoose.Types.ObjectId(theme)})
     }
     const count = await Blog.countDocuments({$and: query});
     const blogs = await Blog.aggregate([
@@ -221,10 +261,24 @@ const get_others = async (req, res) => {
         },
         {
             $lookup: {
+                from: 'users',
+                localField: 'user',
+                foreignField: "_id",
+                as: "user_info"
+            }
+        },
+        {
+            $unwind: {
+              path: "$user_info",
+              preserveNullAndEmptyArrays: true // Optional: keep users without an order
+            }
+        },
+        {
+            $lookup: {
                 from: 'settings',
                 localField: 'theme_ids',
                 foreignField: "_id",
-                as: "theme_info"
+                as: "theme_infos"
             }
         },
         {
@@ -236,6 +290,78 @@ const get_others = async (req, res) => {
         {
             $group: {                               // Group back by user
                 _id: "$_id",
+                user: {$first: "$user_info"},
+                title: {$first: "$title"},
+                files: {$first: "$files"},
+                introduction: {$first: "$introduction"},
+                theme_infos: { $push: "$theme_infos" },
+                created_at: {$first: "$created_at"},
+                updated_at: {$first: "$updated_at"}
+            }
+        },
+        {
+            $limit: limit, 
+        },
+        {
+            $skip: skip
+        }
+    ]).catch(err => {
+        return res.status(400).send({
+            status: false,
+            error: err.message,
+        })
+    });
+    return res.send({ status: true, data: {count, blogs} });
+}
+
+// get blogs I reviewd 
+const get_reviewed = async (req, res) => {
+    const { currentUser } = req;
+    const { limit, skip, theme} = req.query;
+    const reviewes = await Review.find({user: currentUser}).catch(err=>console.log(err.message));
+    const blog_ids = reviewes.map(e => e.blog);
+    const query = [{ _id: {$in: blog_ids} }];
+    
+    if (theme) {
+        query.push({theme_id: new mongoose.Types.ObjectId(theme)})
+    }
+    const count = await Blog.countDocuments({$and: query});
+    const blogs = await Blog.aggregate([
+        {
+            $match: {$and: query},
+        },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'user',
+                foreignField: "_id",
+                as: "user_info"
+            }
+        },
+        {
+            $unwind: {
+              path: "$user_info",
+              preserveNullAndEmptyArrays: true // Optional: keep users without an order
+            }
+        },
+        {
+            $lookup: {
+                from: 'settings',
+                localField: 'theme_ids',
+                foreignField: "_id",
+                as: "theme_infos"
+            }
+        },
+        {
+            $unwind: {
+              path: "$theme_infos",
+              preserveNullAndEmptyArrays: true // Optional: keep users without an order
+            }
+        },
+        {
+            $group: {                               // Group back by user
+                _id: "$_id",
+                user: {$first: "$user_info"},
                 title: {$first: "$title"},
                 files: {$first: "$files"},
                 introduction: {$first: "$introduction"},
@@ -267,4 +393,5 @@ module.exports = {
     get,
     get_mine,
     get_others,
+    get_reviewed,
 }

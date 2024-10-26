@@ -12,6 +12,7 @@ router.delete('/:_id', catchError(blog.remove));
 
 router.get('/mine/', checkListParam, catchError(blog.get_mine));
 router.get('/others/', checkListParam, catchError(blog.get_others));
+router.get('/reviewed/', checkListParam, catchError(blog.get_reviewed));
 router.get('/:_id', catchError(blog.get));
 
 router.post('/review', catchError(blog.review));

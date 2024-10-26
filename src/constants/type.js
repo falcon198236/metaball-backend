@@ -22,6 +22,7 @@ const SettingsType = {
     HIT: 'hit', // 평규 타수 관리, hit
     EXPERIENCE: 'experience',  // 골프 경력, experience
     THEME: 'theme',  // 인기 라운딩 테마 , theme
+    BLOG: 'blog',  // blog테마 , theme
 };
 
 const SystemActionType = {
