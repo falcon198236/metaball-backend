@@ -11,6 +11,7 @@ const club = require('./club');
 const dashboard = require('./dashboard');
 const message = require('./message');
 const follow = require('./follow');
+const review = require('./review');
 const service = require('./service');
 const syslog = require('./syslog');
 const { login} = require('../../controllers/manager');
@@ -32,6 +33,7 @@ router.use('/content', checkAdminAuth, content);
 router.use('/blog', checkAdminAuth, blog);
 router.use('/message', checkAdminAuth, message);
 router.use('/follow', checkAdminAuth, follow);
+router.use('/review', checkAdminAuth, review);
 router.use('/service', checkAdminAuth, service);
 router.use('/syslog', checkAdminAuth, syslog);
 

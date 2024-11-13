@@ -61,8 +61,9 @@ const update = async(req, res) => {
         req.body['logo'] = _files[0];
     }
     const result = await User.updateOne({_id}, {$set: req.body}).catch((err) => {
-        return res.status(400).send({
+        return res.status(203).send({
             status: false,
+            code: 203,
             error: err.message,
         })
     });

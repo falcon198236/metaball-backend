@@ -28,11 +28,11 @@ const UserSchema = new Schema(
     occupation: {type: String, default: ''},
     themes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'settings' }],
     accesses: [{type: mongoose.Schema.Types.ObjectId, ref: 'access'}], //only for admin
-    experience_years: { //高尔夫历
+    experience: { //高尔夫历
       type: Number,
       default: 0,
     },
-    average_score : {  //平均分
+    hit : {  //平均分
       type: Number,
       default: 0,
     },

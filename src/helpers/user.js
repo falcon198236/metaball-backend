@@ -29,7 +29,7 @@ const create = async(data) => {
         ...data,
     });
     const result = await user.save().catch(err=> {
-        return { status: false, code: 400, error: err.message };
+        return { status: false, code: 203, error: err.message };
     });
     return {status: true, code: 200, data: result};
 };

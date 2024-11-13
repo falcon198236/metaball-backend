@@ -12,6 +12,14 @@ const { get_users:get_users_helper } = require('../helpers/user');
 const create = async(req, res) => {
     const {currentUser} = req;
     const _files = req.files?.map(f => f.path);
+    const _club = await Club.findOne({name: req.body.name});
+    if (_club) {
+        return res.status(203).send({
+            status: false,
+            code: 203,
+            error: 'there is already such club',
+        });
+    }
     if (currentUser.role == 2) {
         req.body.user = currentUser._id;
     } else {
@@ -33,7 +41,7 @@ const create = async(req, res) => {
             status: false,
             code: 400,
             error: err.message,
-        })
+        });
     });
 
     const club_member = new ClubMembers({
@@ -51,6 +59,16 @@ const update = async(req, res) => {
     const { currentUser } = req;
     const { _id } = req.params;
     const _files = req.files?.map(f => f.path);
+    if(req.body.name) {
+        const _club = await Club.findOne({name: req.body.name});
+        if (_club?._id.toString() !== _id.toString()) {
+            return res.status(203).send({
+                status: false,
+                code: 203,
+                error: 'there is already such club',
+            });
+        }
+    }
     const club = await Club.findOne({_id}).catch(err=> console.log(err.message));
     if (currentUser.role === 2 && club.user.toString() !== currentUser._id.toString()) {
         return res.status(400).send({
@@ -72,9 +90,9 @@ const update = async(req, res) => {
         req.body['logo'] = _files[0];
     }
     const result = await Club.updateOne({_id}, {$set: req.body}).catch((err) => {
-        return res.status(400).send({
+        return res.status(203).send({
             status: false,
-            code: 400,
+            code: 203,
             error: err.message,
         })
     });
@@ -230,7 +248,7 @@ const get_mine = async (req, res) => {
 const get_available_users = async (req, res) => {
     const {currentUser} = req;
     const {_id} = req.params;
-    const {limit, skip, key, sex, location, golf_experience, golf_hit, start_age, end_age} = req.query;
+    const {limit, skip, name, sex, start_age, end_age} = req.query;
     const club = await Club.find({_id});
     if (!club) {
         return res.status(400).send({
@@ -246,30 +264,22 @@ const get_available_users = async (req, res) => {
     if (club_users.length > 0) {
         query._id = {$nin: club_users};
     }
-    if (key) {
-        query['$or'] = [{email: {$regex: `${key}.*`, $options:'i' }},
-            {fullname: {$regex: `${key}.*`, $options:'i' }},
+    if (name) {
+        query['$or'] = [{email: {$regex: `${name}.*`, $options:'i' }},
+            {fullname: {$regex: `${name}.*`, $options:'i' }},
         ];
     }
     if (sex) {
-        query.sex_option = sex;
+        query.sex = sex;
     }
-    if (golf_hit) {
-        query.golf_hit = {$in:golf_hit};
-    }
-    if (golf_experience) {
-        query.golf_experience = {$in:golf_experience};
-    }
-    if (location) {
-        query.location = location;
-    }
+    
     if(start_age) {
         let age1 = moment().subtract(start_age, 'year');
-        query.birthday = {$gte: age1.toDate()};
+        query.birthday = {$lte: age1.toDate()};
     }
     if(end_age) {
         let age2 = moment().subtract(end_age, 'year');
-        query.birthday = {... query.birthday, ...{$lte: age2.toDate()}};
+        query.birthday = {... query.birthday, ...{$gte: age2.toDate()}};
     }
     
     const {count, users} = await get_users_helper(query, limit, skip);

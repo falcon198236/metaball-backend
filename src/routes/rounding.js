@@ -13,7 +13,7 @@ router.delete('/:_id', catchError(rounding.remove));
 router.get('/', checkListParam, catchError(rounding.get_recent));
 router.get('/mine/', checkAuth, checkListParam, catchError(rounding.get_mine));
 router.get('/date/', checkAuth, checkListParam, correctQuery, catchError(rounding.get_date));
-router.get('/range/', checkAuth, checkListParam, catchError(rounding.get_range));
+router.get('/range/', checkAuth, checkListParam, correctQuery, catchError(rounding.get_range));
 router.get('/requested-users/:_id', checkAuth, checkListParam, correctQuery, catchError(rounding.get_requested_users));
 router.get('/invited-users/:_id', checkAuth, checkListParam, catchError(rounding.get_invited_users));
 router.get('/gather-users/:_id', checkAuth, checkListParam, correctQuery, catchError(rounding.get_available_users));

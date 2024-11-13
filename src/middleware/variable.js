@@ -26,8 +26,8 @@ const array_variables = [
 
   // rounding
   'golf_themes',
-  'golf_hit',
-  'golf_experience',
+  'golf_hits',
+  'golf_experiences',
 
   // blog
   'theme_ids',

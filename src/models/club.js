@@ -25,8 +25,7 @@ const ClubSchema = new Schema(
   }
 );
 
-ClubSchema.index({ name: 1 });
-
+ClubSchema.index({ name: 1, unique: true });
 const Club = mongoose.model('club', ClubSchema);
 
 module.exports = Club;
