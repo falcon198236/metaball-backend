@@ -4,13 +4,14 @@ const Schema = mongoose.Schema;
 
 const ContentSchema = new Schema(
   {
-    title: String,
+    title: {type: String, default: ''},
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
-    files: [{type: String}],
-    introduction: String,
+    file: {type: String, default: ''},
+    html: {type: String, default: ''},
+    sub_type: {type: String, default: ''}, // it is only for news
     type: {
       type: String,
-      default: 'news', // blog, notification, event, information, news
+      default: 'news', // event, advertision,  news
     },
     active: { type: Boolean, default: true},
   },

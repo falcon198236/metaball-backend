@@ -10,6 +10,7 @@ const checkListParam = async (req, res, next) => {
     if(typeof active === 'string') req.query.active = active.toLowerCase() === 'true';
     else req.query.active = active;
   }
+
   next();
 }
 module.exports = {

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { syslog } = require('../helpers/systemlog');
 const { SystemActionType } = require('../constants/type');
 const { UserHidenField } = require('../constants/security');
 const Review = require('../models/review');
@@ -26,12 +25,12 @@ const create = async(req, res) => {
     const result = await review.save().catch((err) => {
         return res.status(400).send({
             status: false,
+            code: 400,
             error: err.message,
         });
     });
-    // add syslog
-    syslog(currentUser._id, SECTION, SystemActionType.ADD, req.body);
-    return res.send({status: true, data: result});
+    
+    return res.send({status: true, code: 200, data: result});
     
 };
 
@@ -44,17 +43,19 @@ const update = async(req, res) => {
     if (!review) {
         return res.status(400).send({
             status: false,
+            code: 400,
             error: 'there is no review',
         })
     }
     const result = await Review.updateOne({_id}, {$set: {content}}).catch((err) => {
         return res.status(400).send({
             status: false,
+            code: 400,
             error: err.message,
         });
     });
-    syslog(currentUser._id, SECTION, SystemActionType.UPDATE, req.body);
-    return res.send({status: true, data: result});
+    
+    return res.send({status: true, code: 200, data: result});
 };
 
 // remove a review
@@ -64,30 +65,33 @@ const remove = async (req, res) => {
     if (!review) {
         return res.status(400).send({
             status: false,
+            code: 400,
             error: 'there is no review',
         });
     }
     const result = await Review.deleteOne({_id}).catch(err => {
         return res.status(400).send({
             status: false,
+            code: 400,
             error: err.message,
         });
     });
-    syslog(currentUser._id, SECTION, SystemActionType.DELETE, _id);
-    return res.send({status: true, data: result});
+    
+    return res.send({status: true, code: 200, data: result});
 };
 
 // remove the selected reviews.
 const removes = async (req, res) => {
     const { ids } = req.body;
     const result = await Review.deleteMany({_id: {$in: ids}}).catch(err => {
-        return res.status(201).send({
+        return res.status(400).send({
             status: false,
+            code: 400,
             error: err.message,
         });
     });
-    syslog(currentUser._id, SECTION, SystemActionType.DELETE, ids);
-    return res.send({status: true, data: result});
+    
+    return res.send({status: true, code: 200, data: result});
 };
 
 
@@ -96,13 +100,15 @@ const get = async (req, res) => {
     const { _id } = req.params;
     const review = await Review.findOne({_id}).catch(err => console.log(err.message));
     if (!review) {
-        return res.status(201).send({
+        return res.status(400).send({
             status: false,
+            code: 400,
             error: 'there is no blog',
         })
     }
     return res.send({
         status: true,
+        code: 200,
         data: review,
     })
 };
@@ -125,7 +131,7 @@ const gets = async (req, res) => {
         .skip(skip)
         .catch(err=> console.log(err.message));
 
-    return res.send({ status: true, data: {count, reviews} });
+    return res.send({ status: true, code: 200, data: {count, reviews} });
 };
 
 

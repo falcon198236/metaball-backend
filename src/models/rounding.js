@@ -13,7 +13,7 @@ const RoundingSchema = new Schema(
     place: String, // 场地名
     address: String, // 具体地址
     type: String, //user and club, if rounding is created by user, type is 'person' and otherwise, type is 'club'
-    sex_option: { type: String, default: 'no'}, // no, man, woman,
+    sex_option: { type: String, default: 'both'}, // both, man, woman,
     golf_themes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'settings'}],
     golf_hit: [{ type: mongoose.Schema.Types.ObjectId, ref: 'settings'}],
     golf_experience: [{ type: mongoose.Schema.Types.ObjectId, ref: 'settings'}],

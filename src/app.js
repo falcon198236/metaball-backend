@@ -1,5 +1,5 @@
 const express = require('express');
-
+const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const { v4: uuidv4 } = require('uuid');
@@ -10,6 +10,12 @@ const adminRouter = require('./routes/admin');
 const { createSuperManager } = require('./helpers/manager')
 const app = express();
 
+
+const corsConfig = {
+  credentials: false,
+  origin: false,
+}
+app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 // app.use((req, res, next) => {

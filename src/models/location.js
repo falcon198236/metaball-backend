@@ -4,8 +4,8 @@ const Schema = mongoose.Schema;
 
 const LocationSchema = new Schema(
   {
-    name: String,
-    map_link: String
+    name: {type: String, default:''},
+    file: {type: String, default:''}
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

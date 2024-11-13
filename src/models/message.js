@@ -1,14 +1,16 @@
 const mongoose = require('mongoose');
-
+const {MessageType} = require('../constants/type')
 const Schema = mongoose.Schema;
 
 const MessageSchema = new Schema(
   {
-    msg: String,
+    msg: { type: String, default: ''},
     from_user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     to_user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     club: { type: mongoose.Schema.Types.ObjectId, ref: 'club' }, // club message
-    files: [{type: String}],
+    file: {type: String, default: ''},
+    type: {type: String, default: MessageType.NORMAL},
+    status: { type: Boolean, default: false}
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

@@ -7,7 +7,7 @@ const ServiceSchema = new Schema(
   {
     title: { type: String, default: ''},
     icon: { type: String, default: ''},
-    content: { type: String, default: ''},
+    html: { type: String, default: ''},
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     enabled: { type: String, default: true},
     order: {type: Number, default: 0}

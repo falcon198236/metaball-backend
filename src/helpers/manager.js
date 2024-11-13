@@ -9,7 +9,7 @@ const createSuperManager = async() => {
     }
     const _admin = await User.findOne({email:data.email}).catch(() => {});
     if(_admin) {
-        return {status: false, error: 'the user is already exists.'};
+        return {status: false, code: 203, error: 'the user is already exists.'};
     }
 
     const salt = crypto.randomBytes(16).toString('hex');
@@ -40,7 +40,8 @@ const create = async(data) => {
     const _manager = await User.findOne({email}).catch(() => {});
     if(_manager) {
         return {
-            status: false, 
+            status: false,
+            code: 202,
             error: 'the user is already exists.'
         };
     }
@@ -60,11 +61,12 @@ const create = async(data) => {
     const result = await manager.save().catch(err=> {
         return {
             status: false,
+            code: 400,
             error: err.message,
         };
     });
     
-    return {status: true, data: result};
+    return {status: true, code: 200, data: result};
 };
 
 module.exports = {

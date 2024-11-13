@@ -48,6 +48,10 @@ const UserSchema = new Schema(
     role: {type: Number, default: 2},
     deleted: {type: Boolean, default: false},
     socket_id: String,
+    forgot_info: {
+      code: String,
+      date: Date
+    }
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

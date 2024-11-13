@@ -1,5 +1,4 @@
 const fs = require('fs');
-const { syslog } = require('../helpers/systemlog');
 const { SystemActionType } = require('../constants/type');
 const Service = require('../models/service');
 
@@ -21,7 +20,6 @@ const create = async(req, res) => {
         })
     });
 
-    syslog(currentUser._id, SECTION, SystemActionType.ADD, req.body);
     return res.send({status: true, data: result});
     
 };
@@ -32,17 +30,17 @@ const update = async(req, res) => {
     const { _id, } = req.params;
     const _files = req.files?.map(f => f.path);
     
-    const blog = await Blog.findOne({_id}).catch(err=> console.log(err.message));
-    if (!blog) {
+    const service = await Service.findOne({_id}).catch(err=> console.log(err.message));
+    if (!service) {
         return res.status(400).send({
             status: false,
-            error: 'there is no blog',
+            error: 'there is no service',
         })
     }
 
-    if (_files?.length > 0 && blog['icon']) {
-        if(fs.existsSync(blog['icon'])) {
-                fs.unlinkSync(blog['icon']);    
+    if (_files?.length > 0 && service['icon']) {
+        if(fs.existsSync(service['icon'])) {
+                fs.unlinkSync(service['icon']);    
         }
     }
     const data = {... req.body};
@@ -54,7 +52,7 @@ const update = async(req, res) => {
             error: err.message,
         });
     });
-    syslog(currentUser._id, SECTION, SystemActionType.UPDATE, req.body);
+    
     return res.send({status: true, data: result});
 };
 
@@ -78,7 +76,31 @@ const remove = async (req, res) => {
             error: err.message,
         })
     })
-    syslog(currentUser._id, SECTION, SystemActionType.DELETE, _id);
+    
+    return res.send({status: true, data: result});
+};
+
+
+
+const removes = async (req, res) => {
+    const { ids } = req.body;
+    const services = await Service.find({_id: {$in: ids}}).catch(err => console.log(err.message));
+    services.forEach(b => {
+        if (b['icon']) {
+            b['icon']?.forEach(f => {
+                if(fs.existsSync(f)) {
+                    fs.unlinkSync(f);    
+                }
+            });
+        }   
+    })
+    const result = await Service.deleteMany({_id: {$in: ids}}).catch(err => {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: err.message,
+        });
+    });
     return res.send({status: true, data: result});
 };
 
@@ -127,6 +149,7 @@ module.exports = {
     create,
     update,
     remove,
+    removes,
     get,
     gets,
     change_order,

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { syslog } = require('../helpers/systemlog');
 const Message = require('../models/message');
 const User = require('../models/user');
 const { UserHidenField } = require('../constants/security');
@@ -57,7 +56,7 @@ const send_dm_message = async (socket, user, msg) => {
         return;
     }
     if (to_user.socket_id) {
-        socket_io.to(_user.socket_id).emit('1000', {from_user, to_user, msg});
+        socket_io.to(_user.socket_id).emit('200', {from_user, to_user, msg});
     }
     const message = new Message({
         from_user,

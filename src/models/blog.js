@@ -10,6 +10,7 @@ const BlogSchema = new Schema(
     introduction: String,
     // theme_id: { type: mongoose.Schema.Types.ObjectId, ref: 'settings'}, // only for blog      
     theme_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'settings'}], // only for blog      
+    allow_feedback: { type: Boolean, default: true},
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

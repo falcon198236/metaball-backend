@@ -1,13 +1,15 @@
 const { SettingsType } = require('../constants/type');
 const Settings = require('../models/settings');
-const { syslog } = require('../helpers/systemlog');
 const { SystemActionType } = require('../constants/type');
 
 const SECTION = 'settings';
 const create = async(req, res) => {
     const {currentUser} = req;
+    const _files = req.files?.map(f => f.path);
+
     const settings = new Settings({
         ... req.body,
+        file: _files?.length?_files[0] : ''
     });
     const result = await settings.save().catch(err => {
         return res.status(400).send({
@@ -15,41 +17,50 @@ const create = async(req, res) => {
             error: err.message,
         })
     });
-    syslog(currentUser._id, SECTION, SystemActionType.ADD, req.body);
+
     return res.send({ status: true, data: result });
 };
 
 const update = async(req, res) => {
     const {currentUser} = req;
     const { _id } = req.params;
-    const result = await Settings.updateOne({_id}, {$set: req.body}).catch((err) => {
+    const _files = req.files?.map(f => f.path);
+
+    const setting = await Settings.findOne({_id}).catch(err=> console.log(err.message));
+    if (!setting) {
+        return res.status(400).send({
+            status: false,
+            error: 'there is no setting',
+        })
+    }
+
+    if (_files?.length > 0 && setting['file']) {
+        const f = setting['file'];
+        if(fs.existsSync(f)) {
+            fs.unlinkSync(f);    
+        }
+    }
+    const data = {... req.body};
+    if (_files?.length) data.file = _files[0];
+
+    const result = await Settings.updateOne({_id}, {$set: data}).catch((err) => {
         return res.status(400).send({
             status: false,
             error: err.message,
         })
     });
-    syslog(currentUser._id, SECTION, SystemActionType.UPDATE, req.body);
+
     return res.send({ status: true, data: result });
 };
 
 const gets = async (req, res) => {
     const { type, key, limit, skip } = req.query;
-    const query = [{type}];
+    const query = {type};
     if (key)
-        query.push({title: {$regex: `${key}.*`, $options:'i' }});
-    const count = await Settings.countDocuments({$and:query});
-    const data = await Settings.aggregate([
-        {
-            $match: {$and: query},
-        },
-        {
-            $limit: limit, 
-        },
-        {
-            $skip: skip,
-        },
-    ]);
-
+        query.title = {$regex: `${key}.*`, $options:'i' };
+    const count = await Settings.countDocuments(query);
+    const data = await Settings.find(query)
+        .limit(limit).skip(skip);
     return res.send({ status: true, data: {count, data} });
 };
 
@@ -62,7 +73,7 @@ const remove = async (req, res) => {
             error: err.message,
         });
     });
-    syslog(currentUser._id, SECTION, SystemActionType.DELETE, _id);
+
     return res.send({status: true, data: result });
 };
 
@@ -76,7 +87,7 @@ const removes = async (req, res) => {
             error: err.message,
         });
     });
-    syslog(currentUser._id, SECTION, SystemActionType.DELETE, ids);
+
     return res.send({ status: true, data: result });
 };
 
@@ -86,7 +97,7 @@ const get = async (req, res) => {
     if(!settings) {
         return res.status(400).send({
             status: false,
-            error: 'there is no access',
+            error: 'there is no settings',
         })
     }
     

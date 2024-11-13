@@ -2,7 +2,6 @@ const User = require('../models/user');
 const jwt = require('jsonwebtoken');
 const api = require('../configs/api.js');
 const { UserHidenField } = require('../constants/security');
-
 const checkAuth = async (req, res, next) => {
   const bearer_token = req.get('Authorization');
   const token = bearer_token.replace('Bearer ', '');
@@ -25,7 +24,6 @@ const checkAuth = async (req, res, next) => {
     console.log('err', err);
   });
   if (req.currentUser) {
-    console.log('user:[', req.currentUser._id, '] [', req.currentUser.email, '] - ', req.originalUrl);
     next();
   } else {
     console.error('Valid JWT but no user:', decoded);
@@ -49,6 +47,7 @@ const checkAdminAuth = async (req, res, next) => {
   if (!decoded) {
     return res.status(401).send({
       status: false,
+      code: 401,
       error: 'Authorization failed',
     });
   }
@@ -60,10 +59,12 @@ const checkAdminAuth = async (req, res, next) => {
   });
   
   if (req.currentUser) {
+      // console.log('admin user:[', req.currentUser._id, '] [', req.currentUser.email, '] - ', req.originalUrl);
       next();
   } else {
-    res.status(401).send({
+    res.status(402).send({
       status: false,
+      code: 402,
       error: 'invalid_user',
     });
   }
@@ -81,6 +82,7 @@ const verifyToken = async (req, res) => {
   if (!decoded) {
     return res.status(401).send({
       status: false,
+      code: 401,
       error: 'Authorization failed',
     });
   }
@@ -94,12 +96,14 @@ const verifyToken = async (req, res) => {
   if (req.currentUser) {
     return res.send({
       status: true,
+      code: 200,
       data: req.currentUser
     });
   } else {
-    res.status(401).send({
+    res.status(400).send({
       status: false,
-      error: 'invalid token',
+      code: 402,
+      error: 'invalid User',
     });
   }
 }

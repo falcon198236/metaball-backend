@@ -11,7 +11,8 @@ const ContentType = {
     NOTIFICATION: 'notification', //알람
     NOTE: 'note', //공지사항
     NEWS: 'news', //뉴스
-    BLOG: 'blog', //BLOG
+    EVENT: 'event', //BLOG
+    ADEVERTISING: 'advertising'
 };
 
 const BlogFilterType = {
@@ -36,11 +37,28 @@ const SystemActionType = {
     RESET_PASSOWRD: 'reset password',
 };
 
-const RoundingRequestType = {
+const RequestType = {
     REQUEST: 'request',
     INVITE: 'invite',
+    OWN: 'own',
 }
 
+const ClubJoinApproval = {
+    ADMIN: 'admin', // actually ,admin & owner
+    OWNER: 'owner',
+    NONE: 'none',
+}
+
+const ClubAdminSelection = {
+    ADMIN: 'admin',
+    OWNER: 'owner',
+}
+
+const MessageType = {
+    REQUEST: 'request',
+    ACCEPT: 'accept',
+    NORMAL: 'normal',
+}
 
 module.exports = {
     FollowType,
@@ -49,5 +67,6 @@ module.exports = {
     ContentType,
     BlogFilterType,
     SystemActionType,
-    RoundingRequestType,
+    RequestType,
+    MessageType,
 }

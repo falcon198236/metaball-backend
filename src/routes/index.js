@@ -9,21 +9,23 @@ const follow = require('./follow');
 const rounding = require('./rounding');
 const review = require('./review');
 const service = require('./service');
+const message = require('./message');
 const { checkAuth, verifyToken } = require('../middleware/auth')
 const { login, signup, logout} = require('../controllers/user');
 const {catchError} = require('./error');
 const router = express.Router();
 // App api
 router.use('/user', checkAuth, user);
-router.use('/location', checkAuth, location);
-router.use('/content', checkAuth, content);
-router.use('/settings', checkAuth, settings);
+router.use('/location', location);
+router.use('/content', content);
+router.use('/settings', settings);
 router.use('/club', checkAuth, club);
-router.use('/blog', checkAuth, blog);
+router.use('/blog', blog);
 router.use('/follow', checkAuth, follow);
-router.use('/rounding', checkAuth, rounding);
+router.use('/rounding', rounding);
 router.use('/review', checkAuth, review);
 router.use('/service', checkAuth, service);
+router.use('/message', checkAuth, message);
 
 router.post('/login', catchError(login));
 router.post('/signup', catchError(signup));

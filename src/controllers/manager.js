@@ -2,7 +2,6 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const api = require('../configs/api');
-const { syslog } = require('../helpers/systemlog');
 const { SystemActionType } = require('../constants/type');
 const {
     create: createManager,
@@ -11,17 +10,16 @@ const SECTION = 'manager';
 const create = async(req, res) => {
     const { currentUser } = req; 
     req.body.role = 1;
-    const {status, data, error} = await createManager(req.body);
-    
-    syslog(currentUser._id, SECTION, SystemActionType.ADD, req.body);
+    const {status, code, data, error} = await createManager(req.body);
     
     if(!status) {
-        return res.status(400).send({
+        return res.status(code).send({
             status,
+            code,
             error,
         })
     }
-    return res.send({ status, data });
+    return res.send({ status, data, code: 200, });
 };
 
 const update = async(req, res) => {
@@ -29,18 +27,21 @@ const update = async(req, res) => {
     const result = await User.updateOne({_id}, {$set: req.body}).catch((err) => {
         return res.status(400).send({
             status: false,
+            code: 400,
             error: err.message,
         })
     });
-    syslog(currentUser._id, SECTION, SystemActionType.UPDATE, req.body);
+
     return res.send({
         status: true,
+        code: 200,
         data: result,
     })
 };
 
 const login = async(req, res) => {
     const {email, password} = req.body;
+    console.log('ADMIN LOGIN: [', email ,']', req.body);
     const manager = await User.findOne({
         $and: [
             {
@@ -55,6 +56,7 @@ const login = async(req, res) => {
     if (!manager) {
         return res.status(201).send({
             status: false,
+            code: 201,
             error: 'there is no such admin.',
         });
     }
@@ -64,7 +66,9 @@ const login = async(req, res) => {
     if(hash !== manager.hash) {
         return res.status(202).send({
             status: false,
+            code: 202,
             error: 'Invalid password.',
+
         });
     }
     const payload = {
@@ -73,8 +77,6 @@ const login = async(req, res) => {
     };
     const token = jwt.sign(payload, api.SECURITY_ADMIN_KEY);
     
-    syslog(manager.id, SECTION, SystemActionType.LOGIN);
-
     User.updateOne({_id: manager._id}, {
         $set: {
             last_login_at: new Date(),
@@ -83,6 +85,7 @@ const login = async(req, res) => {
     
     return res.send({
         status: true,
+        code: 200,
         data: {
             token,
             manager,
@@ -92,52 +95,44 @@ const login = async(req, res) => {
 
 const logout = async(req, res) => {
     const {currentUser} = req;
-    syslog(currentUser._id, SECTION, SystemActionType.LOGOUT);
     
     return res.send({
         status: true,
+        code: 200,
     })
 };
 
 const gets = async (req, res) => {
     const { currentUser} = req;
     const { key, limit, skip } = req.query;
-    const query = [{role: 1}, {_id: { $nin: [currentUser._id]}}];
+    const query = {role: 1, _id: { $nin: [currentUser._id]}};
     if (key)
-        query.push({email: {$regex: `${key}.*`, $options:'i' }});
-    console.log(query);
-    const count = await User.countDocuments({$and:query});
-    const managers = await User.aggregate([
+        query.email = {$regex: `${key}.*`, $options:'i' };
+    
+    const count = await User.countDocuments(query);
+    const managers = await User.find(
+        query,
         {
-            $match: {$and: query},
-        },
-        {
-            $limit: limit, 
-        },
-        {
-            $skip: skip,
-        },
-        {
-            $project: {
-                average_score: 0, 
-                month_average_score: 0,
-                best_score: 0,
-                follow_user_ids: 0,
-                follow_club_ids: 0,
-                experience_years: 0,
-                themes: 0,
-                salt: 0,
-                hash: 0,
-                created_at: 0,
-                updated_at: 0,
-                role: 0,
-                deleted: 0,
-                __v: 0
-            }
+            average_score: 0, 
+            month_average_score: 0,
+            best_score: 0,
+            follow_user_ids: 0,
+            follow_club_ids: 0,
+            experience_years: 0,
+            themes: 0,
+            salt: 0,
+            hash: 0,
+            created_at: 0,
+            updated_at: 0,
+            role: 0,
+            deleted: 0,
+            __v: 0
         }
-    ]);
+    )
+    .limit(limit)
+    .skip(skip);
 
-    return res.send({ status: true, data: {count, managers} });
+    return res.send({ status: true, code: 200, data: {count, managers} });
 };
 
 const remove = async (req, res) => {
@@ -146,24 +141,26 @@ const remove = async (req, res) => {
     const result = await User.deleteOne({_id}).catch(err => {
         return res.status(400).send({
             status: false,
+            code: 400,
             error: err.message,
         });
     });
-    syslog(currentUser._id, SECTION, SystemActionType.DELETE, _id);
-    return res.send({status: true, data: result});
+    return res.send({status: true, code: 200, data: result});
 };
 
 const removes = async (req, res) => {
     const {currentUser} = req;
     const { ids } = req.body;
+    console.log('removes====', req.body);
     const result = await User.deleteMany({_id: {$in: ids}}).catch(err => {
         return res.status(400).send({
             status: false,
+            code: 400,
             error: err.message,
         });
     });
-    syslog(currentUser._id, SECTION, SystemActionType.DELETE, ids);
-    return res.send({status: true, data: result});
+
+    return res.send({status: true, code: 200, data: result});
 };
 
 const get = async (req, res) => {
@@ -192,6 +189,7 @@ const get = async (req, res) => {
     }
     return res.send({
         status: true,
+        code: 200,
         data: _manager,
     })
 };
@@ -212,12 +210,14 @@ const changePassword = async (req, res) => {
     }).catch(err => {
         return res.status(400).send({
             status: false,
+            code: 400,
             error: err.message,
         })
     });
-    syslog(currentUser._id, SECTION, SystemActionType.CHANGE_PASSOWRD, result);
+
     return res.send({
         status: true,
+        code: 200,
         data: result,
     })
 }
@@ -229,6 +229,7 @@ const resetPassword = async (req, res) => {
     if (!manager) {
         return res.status(400).send({
             status: false,
+            code: 400,
             error: 'there is no user.',
         })
     }
@@ -245,12 +246,14 @@ const resetPassword = async (req, res) => {
     }).catch(err => {
         return res.status(400).send({
             status: false,
+            code: 400,
             error: err.message,
         })
     });
-    syslog(currentUser._id, SECTION, SystemActionType.RESET_PASSWORD, result);
+
     return res.send({
         status: true,
+        code: 200,
         data: result,
     })
 }

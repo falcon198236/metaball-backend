@@ -1,15 +1,19 @@
 const Blog = require('../models/blog');
 const fs = require('fs');
-const { syslog } = require('../helpers/systemlog');
 const { SystemActionType } = require('../constants/type');
 const Review = require('../models/review');
+const User = require('../models/user');
 const mongoose = require('mongoose');
-const {remove: removeHelper} = require('../helpers/blog');
+const {
+    remove: remove_helper,
+    get_blogs: get_blogs_helper,
+} = require('../helpers/blog');
 const SECTION = 'blog';
 
 // create a blog
 const create = async(req, res) => {
     const {currentUser} = req;
+    
     const _files = req.files?.map(f => f.path);
     const {theme_ids: _theme_ids} = req.body;
     if(_theme_ids) {
@@ -29,12 +33,12 @@ const create = async(req, res) => {
     const result = await blog.save().catch((err) => {
         return res.status(400).send({
             status: false,
+            code: 400,
             error: err.message,
         })
     });
 
-    syslog(currentUser._id, SECTION, SystemActionType.ADD, req.body);
-    return res.send({status: true, data: result});
+    return res.send({status: true, code: 200, data: result});
     
 };
 
@@ -48,6 +52,7 @@ const update = async(req, res) => {
     if (!blog) {
         return res.status(400).send({
             status: false,
+            code: 400,
             error: 'there is no blog',
         })
     }
@@ -65,26 +70,26 @@ const update = async(req, res) => {
     const result = await Blog.updateOne({_id}, {$set: data}).catch((err) => {
         return res.status(400).send({
             status: false,
+            code: 400,
             error: err.message,
         });
     });
-    syslog(currentUser._id, SECTION, SystemActionType.UPDATE, req.body);
-    return res.send({status: true, data: result});
+    return res.send({status: true, code: 200, data: result});
 };
 
 // remove a blog
 const remove = async (req, res) => {
     const {currentUser} = req;
     const { _id } = req.params;
-    const {status, result, error} = await removeHelper(_id);
+    const {status, result, error} = await remove_helper(_id);
     if (!status) {
         return res.status(400).send({
             status,
+            code: 400,
             error,
         })
     }
-    syslog(currentUser._id, SECTION, SystemActionType.DELETE, _id);
-    return res.send({status: true, data: result});
+    return res.send({status: true, code: 200, data: result});
 };
 
 const removes = async (req, res) => {
@@ -100,289 +105,114 @@ const removes = async (req, res) => {
         }   
     })
     const result = await Blog.deleteMany({_id: {$in: ids}}).catch(err => {
-        return res.status(201).send({
+        return res.status(400).send({
             status: false,
+            code: 400,
             error: err.message,
         });
     });
-    syslog(currentUser._id, SECTION, SystemActionType.DELETE, ids);
     return res.send({status: true, data: result});
 };
 
 // get a blog with _id
 const get = async (req, res) => {
     const { _id } = req.params;
-    const blogs = await Blog.aggregate([
-        {
-            $match: {_id: new mongoose.Types.ObjectId(_id)},
-        },
-        {
-            $lookup: {
-                from: 'users',
-                localField: 'user',
-                foreignField: "_id",
-                as: "user_info"
-            }
-        },
-        {
-            $unwind: {
-              path: "$user_info",
-              preserveNullAndEmptyArrays: true // Optional: keep users without an order
-            }
-        },
-        {
-            $lookup: {
-                from: 'settings',
-                localField: 'theme_ids',
-                foreignField: "_id",
-                as: "theme_infos"
-            }
-        },
-        {
-            $unwind: {
-              path: "$theme_infos",
-              preserveNullAndEmptyArrays: true // Optional: keep users without an order
-            }
-        },
-        {
-            $group: {                               // Group back by user
-                _id: "$_id",
-                user: {$first: "$user_info"},
-                title: {$first: "$title"},
-                files: {$first: "$files"},
-                introduction: {$first: "$introduction"},
-                theme_infos: { $push: "$theme_infos" },
-                created_at: {$first: "$created_at"},
-                updated_at: {$first: "$updated_at"}
-            }
-        },
-        {
-            $limit: 1, 
-        }
-    ]).catch(err => {
-        return res.status(400).send({
-            status: false,
-            err: err.message,
-        })
-    });
-    if (blogs.length > 0) {
+    const query = {_id};
+    const {count, blogs} = await get_blogs_helper(query, 1, 0);
+
+    if (count > 0) {
         return res.send({
             status: true,
+            code: 200,
             data: blogs[0]
         })
     }
     return res.status(400).send({
         status: false,
+        code: 400,
         data: 'there is no blog',
     })
+};
+
+// get a blog with _id
+const gets = async (req, res) => {
+    const { _id } = req.params;
+    const { key, limit, skip} = req.query;
+    
+    const query = {};
+    if (key) query.title = {$regex: `${key}.*`, $options:'i' };
+    const {count, blogs} = await get_blogs_helper(query, limit, skip);
+    return res.send({
+            status: true,
+            code: 200,
+            data: {
+                count, blogs
+            }
+        });
+};
+
+
+// get recent blogs
+const get_recent = async (req, res) => {
+    const { limit, skip} = req.query;
+    const start_date = new Date();
+    const query = {
+        created_at: {
+            $gte: start_date,
+        }
+    };
+    const {count, blogs} = await get_blogs_helper(query, limit, skip, -1);
+    return res.send({ status: true, code: 200, data: {count, blogs} });
 };
 
 // get my blogs
 const get_mine = async (req, res) => {
     const { currentUser } = req;
-    const { limit, skip, theme} = req.query;
-    const query = [{ user: currentUser._id }];
-    if (theme) {
-        query.push({theme_ids: new mongoose.Types.ObjectId(theme)})
-    }
-    const count = await Blog.countDocuments({$and: query});
-    const blogs = await Blog.aggregate([
-        {
-            $match: {$and: query},
-        },
-        {
-            $lookup: {
-                from: 'users',
-                localField: 'user',
-                foreignField: "_id",
-                as: "user_info"
-            }
-        },
-        {
-            $unwind: {
-              path: "$user_info",
-              preserveNullAndEmptyArrays: true // Optional: keep users without an order
-            }
-        },
-        {
-            $lookup: {
-                from: 'settings',
-                localField: 'theme_ids',
-                foreignField: "_id",
-                as: "theme_infos"
-            }
-        },
-        {
-            $unwind: {
-              path: "$theme_infos",
-              preserveNullAndEmptyArrays: true // Optional: keep users without an order
-            }
-        },
-        {
-            $group: {                               // Group back by user
-                _id: "$_id",
-                user: {$first: "$user_info"},
-                title: {$first: "$title"},
-                files: {$first: "$files"},
-                introduction: {$first: "$introduction"},
-                theme_infos: { $push: "$theme_infos" },
-                created_at: {$first: "$created_at"},
-                updated_at: {$first: "$updated_at"}
-            }
-        },
-        {
-            $limit: limit, 
-        },
-        {
-            $skip: skip
-        }
-    ]).catch(err => {
-        return res.status(400).send({
-            status: false,
-            error: err.message,
-        })
-    });
+    const { limit, skip, themes} = req.query;
+    const query = { user: currentUser._id };
 
-    return res.send({ status: true, data: {count, blogs} });
+    if (themes) {
+        query.theme_ids = {$in: themes};
+    }
+    const {count, blogs} = await get_blogs_helper(query, limit, skip);
+    return res.send({ status: true, code: 200, data: {count, blogs} });
+};
+
+// get the specified user's blogs
+const get_user = async (req, res) => {
+    const { currentUser } = req;
+    const { limit, skip} = req.query;
+    const { _id } = req.params;
+    const query = { user: _id };
+    const {count, blogs} = await get_blogs_helper(query, limit, skip);
+    return res.send({ status: true, code: 200, data: {count, blogs} });
 };
 
 // get other person's blogs 
 const get_others = async (req, res) => {
     const { currentUser } = req;
-    const { limit, skip, theme} = req.query;
-    const query = [{ user: {$ne: currentUser._id} }];
-    if (theme) {
-        query.push({theme_ids: new mongoose.Types.ObjectId(theme)})
+    const { limit, skip, themes} = req.query;
+    const query = { user: {$ne: currentUser._id} };
+    if (themes) {
+        query.theme_ids = {$in: themes};
     }
-    const count = await Blog.countDocuments({$and: query});
-    const blogs = await Blog.aggregate([
-        {
-            $match: {$and: query},
-        },
-        {
-            $lookup: {
-                from: 'users',
-                localField: 'user',
-                foreignField: "_id",
-                as: "user_info"
-            }
-        },
-        {
-            $unwind: {
-              path: "$user_info",
-              preserveNullAndEmptyArrays: true // Optional: keep users without an order
-            }
-        },
-        {
-            $lookup: {
-                from: 'settings',
-                localField: 'theme_ids',
-                foreignField: "_id",
-                as: "theme_infos"
-            }
-        },
-        {
-            $unwind: {
-              path: "$theme_infos",
-              preserveNullAndEmptyArrays: true // Optional: keep users without an order
-            }
-        },
-        {
-            $group: {                               // Group back by user
-                _id: "$_id",
-                user: {$first: "$user_info"},
-                title: {$first: "$title"},
-                files: {$first: "$files"},
-                introduction: {$first: "$introduction"},
-                theme_infos: { $push: "$theme_infos" },
-                created_at: {$first: "$created_at"},
-                updated_at: {$first: "$updated_at"}
-            }
-        },
-        {
-            $limit: limit, 
-        },
-        {
-            $skip: skip
-        }
-    ]).catch(err => {
-        return res.status(400).send({
-            status: false,
-            error: err.message,
-        })
-    });
-    return res.send({ status: true, data: {count, blogs} });
+    const {count, blogs} = await get_blogs_helper(query, limit, skip);
+    return res.send({ status: true, code: 200, data: {count, blogs} });
 }
 
 // get blogs I reviewd 
 const get_reviewed = async (req, res) => {
     const { currentUser } = req;
-    const { limit, skip, theme} = req.query;
+    const { limit, skip, themes} = req.query;
     const reviewes = await Review.find({user: currentUser}).catch(err=>console.log(err.message));
     const blog_ids = reviewes.map(e => e.blog);
-    const query = [{ _id: {$in: blog_ids} }];
+    const query = { _id: {$in: blog_ids} };
     
-    if (theme) {
-        query.push({theme_id: new mongoose.Types.ObjectId(theme)})
+    if (themes) {
+        query.theme_ids = {$in: themes};
     }
-    const count = await Blog.countDocuments({$and: query});
-    const blogs = await Blog.aggregate([
-        {
-            $match: {$and: query},
-        },
-        {
-            $lookup: {
-                from: 'users',
-                localField: 'user',
-                foreignField: "_id",
-                as: "user_info"
-            }
-        },
-        {
-            $unwind: {
-              path: "$user_info",
-              preserveNullAndEmptyArrays: true // Optional: keep users without an order
-            }
-        },
-        {
-            $lookup: {
-                from: 'settings',
-                localField: 'theme_ids',
-                foreignField: "_id",
-                as: "theme_infos"
-            }
-        },
-        {
-            $unwind: {
-              path: "$theme_infos",
-              preserveNullAndEmptyArrays: true // Optional: keep users without an order
-            }
-        },
-        {
-            $group: {                               // Group back by user
-                _id: "$_id",
-                user: {$first: "$user_info"},
-                title: {$first: "$title"},
-                files: {$first: "$files"},
-                introduction: {$first: "$introduction"},
-                theme_infos: { $push: "$theme_infos" },
-                created_at: {$first: "$created_at"},
-                updated_at: {$first: "$updated_at"}
-            }
-        },
-        {
-            $limit: limit, 
-        },
-        {
-            $skip: skip
-        }
-    ]).catch(err => {
-        return res.status(400).send({
-            status: false,
-            error: err.message,
-        })
-    });
-    return res.send({ status: true, data: {count, blogs} });
+    const {count, blogs} = await get_blogs_helper(query, limit, skip);
+    return res.send({ status: true, code: 200, data: {count, blogs} });
 }
 
 module.exports = {
@@ -391,7 +221,10 @@ module.exports = {
     remove,
     removes,
     get,
+    gets,
     get_mine,
     get_others,
     get_reviewed,
+    get_recent,
+    get_user,
 }
