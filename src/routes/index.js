@@ -24,7 +24,7 @@ router.use('/blog', blog);
 router.use('/follow', checkAuth, follow);
 router.use('/rounding', rounding);
 router.use('/review', checkAuth, review);
-router.use('/service', checkAuth, service);
+router.use('/service', service);
 router.use('/message', checkAuth, message);
 
 router.post('/login', catchError(login));

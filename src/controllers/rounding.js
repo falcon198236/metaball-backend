@@ -115,6 +115,9 @@ const get = async (req, res) => {
             path: 'user',
             select: UserHidenField
         })
+        .populate({
+            path: 'club',
+        })
     .catch(err => console.log(err.message));
     if(!rounding) {
         return res.status(400).send({
