@@ -7,9 +7,6 @@ const UserHidenField = {
     updated_at: 0,
     created_at: 0,
     deleted: 0,
-    follow_user_ids: 0,
-    follow_blog_ids: 0,
-    follow_rounding_ids: 0,
     role: 0,
 };
 

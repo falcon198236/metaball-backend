@@ -5,7 +5,7 @@ const path = require('path');
 const ejs = require('ejs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
-const { change_password } = require('../helpers/user');
+const { change_password: change_password_helper } = require('../helpers/user');
 const api = require('../configs/api');
 const sgMail = require('@sendgrid/mail');
 
@@ -135,6 +135,7 @@ const removes = async (req, res) => {
 };
 
 const get = async (req, res) => {
+    const { currentUser } = req;
     const { _id } = req.params;
     const user = await User.findOne({_id}, UserHidenField).catch(err => console.log(err.message));
     if (!user) {
@@ -143,9 +144,13 @@ const get = async (req, res) => {
             error: 'there is no user',
         })
     }
+    
     return res.send({
         status: true,
-        data: user,
+        data: {
+            ...user._doc,
+            is_followed,
+        },
     })
 };
 
@@ -234,6 +239,7 @@ const me = async (req, res) => {
 
 // get my profile
 const profile = async (req, res) => {
+    const { currentUser } = req;
     const { _id } = req.params;
     const {status, profile} = await get_profile(_id);
     if (!status) {
@@ -242,16 +248,32 @@ const profile = async (req, res) => {
             error: 'there is no such user'
         })
     }
+
+    const is_followed = currentUser.follow_user_ids.findIndex(e => e.toString() === _id.toString()) > -1? true: false;
     return res.send({
         status,
-        data: profile,
+        data: {
+            ...profile,
+            is_followed
+        }
     });
 };
 
-const changePassword = async (req, res) => {
+// change paassword of current user
+const change_password = async (req, res) => {
     const { currentUser } = req;
-    const { password } = req.body;
-    const {status, error} = await change_password(currentUser._id, password);
+    const { old_pwd, new_pwd } = req.body;
+
+    const old_hash = crypto
+        .pbkdf2Sync(old_pwd, currentUser.salt, 10000, 512, 'sha512')
+        .toString('hex');
+    if(old_hash !== currentUser.hash) {
+        return res.status(202).send({
+            status: false,
+            error: 'Invalid old password.',
+        });
+    }
+    const {status, error} = await change_password_helper(currentUser._id, new_pwd);
     if (!status)
         return res.status(400).send({
             status: false,
@@ -263,48 +285,48 @@ const changePassword = async (req, res) => {
     });
 };
 
-const forgot = async (req, res) => {
+const email_send_code = async (req, res) => {
     const { email } = req.body;
     // send email
-    const user = await User.findOne({email});
-    if(!user) {
-        return res.status(400).send({
-            status: false,
-            code: 400,
-            error: 'there is no user',
-        })
-    }
-    if(user.forgot_info?.date) {
-        const saved_time = moment(user.forgot_info.date);
-        const now = moment();
-        const diff_time = now.diff(saved_time, 'seconds');
-        if(diff_time < 60) {
-            return res.status(400).send({
-                status: false,
-                code: 400,
-                error: 'You already send the request for this. please wait a little'
-            });
-        }
-    }
+    // const user = await User.findOne({email});
+    // if(!user) {
+    //     return res.status(400).send({
+    //         status: false,
+    //         code: 400,
+    //         error: 'there is no user',
+    //     })
+    // }
+    // if(user.forgot_info?.date) {
+    //     const saved_time = moment(user.forgot_info.date);
+    //     const now = moment();
+    //     const diff_time = now.diff(saved_time, 'seconds');
+    //     if(diff_time < 60) {
+    //         return res.status(400).send({
+    //             status: false,
+    //             code: 400,
+    //             error: 'You already send the request for this. please wait a little'
+    //         });
+    //     }
+    // }
 
     const templatePath = path.join('./', 'templates', 'forgot.ejs');
     const template = fs.readFileSync(templatePath, 'utf-8');
     const code = Math.floor(100000 + Math.random() * 900000).toString();
 
-    const forgot_info = {
-        code,
-        date: Date.now()
-    }
+    // const forgot_info = {
+    //     code,
+    //     date: Date.now()
+    // }
     
-    await User.updateOne({_id: user._id}, {
-        $set: {forgot_info},
-    }).catch(err => {
-        return res.status(400).send({
-            status: false,
-            code: 400,
-            error: 'can`t send the forgot email.',
-        })
-    });
+    // await User.updateOne({_id: user._id}, {
+    //     $set: {forgot_info},
+    // }).catch(err => {
+    //     return res.status(400).send({
+    //         status: false,
+    //         code: 400,
+    //         error: 'can`t send the forgot email.',
+    //     })
+    // });
 
     const htmlContent = ejs.render(template, { email, code });
 
@@ -324,6 +346,7 @@ const forgot = async (req, res) => {
     return res.send({
         status: true,
         code: 200,
+        verification_code: code,
         //data: result
     })
 }
@@ -370,6 +393,45 @@ const check_forgot_code = async (req, res) => {
     });
 
 }
+//
+const forgot_pwd = async(req, res) => {
+    const { email } = req.body;
+    // send email
+    const user = await User.findOne({email});
+    if(!user) {
+        return res.status(203).send({
+            status: false,
+            code: 203,
+            error: 'there is no user',
+        })
+    }
+   
+    const templatePath = path.join('./', 'templates', 'forgot.ejs');
+    const template = fs.readFileSync(templatePath, 'utf-8');
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const htmlContent = ejs.render(template, { email, code });
+
+    const msg = {
+        to: email,       // Change to your recipient
+        from: 'support@metaball.com',        // Change to your verified sender
+        subject: 'Metalball account team',
+        html: htmlContent,
+      };
+    const result = sgMail.send(msg).catch((error) => {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: error.message
+        });
+    });
+    return res.send({
+        status: true,
+        code: 200,
+        verification_code: code,
+        //data: result
+    })
+}
 
 const reset_password = async (req, res) => {
     const {email, password} = req.body;
@@ -382,7 +444,7 @@ const reset_password = async (req, res) => {
         })
     }
 
-    const {status, error} = await change_password(user._id, password);
+    const {status, error} = await change_password_helper(user._id, password);
     if (!status)
         return res.status(400).send({
             status: false,
@@ -393,6 +455,44 @@ const reset_password = async (req, res) => {
         status: true,
     });
 }
+
+const block_user = async (req, res) => {
+    const {currentUser} = req;
+    const {_id} = req.body;
+    const user = await User.findOne({_id});
+    if (!user) {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: 'there is no user',
+        });
+    }
+    const index = currentUser.block_user_ids?.findIndex(e => e.toString() === _id);
+    if(index > -1) {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: 'this user already was blocked',
+        })
+    }
+    const block_user_ids = currentUser.block_user_ids || [];
+    block_user_ids.push(_id);
+    console.log(block_user_ids, currentUser._id);
+    const result = await User.updateOne({_id: currentUser._id}, {$set: {block_user_ids}}).catch(err =>{
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: err.message
+        });
+    });
+    return res.send({
+        status: true,
+        code: 200,
+        data: result
+    })
+
+}
+
 ////////////////////////////////////////////////////////////////
 
 module.exports = {
@@ -408,8 +508,10 @@ module.exports = {
     update,
     me,
     profile,
-    changePassword,
-    forgot,
+    change_password,
+    email_send_code,
     check_forgot_code,
     reset_password,
+    forgot_pwd,
+    block_user,
 }

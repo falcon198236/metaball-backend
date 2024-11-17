@@ -1,9 +1,9 @@
 const FollowType = {
-    PERSON: 'persion',
+    USER: 'user',
     CLUB: 'club',
 };
 const RoundingMakeType = {
-    PERSON: 'persion',
+    USER: 'user',
     CLUB: 'club',
 };
 
@@ -56,8 +56,16 @@ const ClubAdminSelection = {
 
 const MessageType = {
     REQUEST: 'request',
-    ACCEPT: 'accept',
+    INVITE: 'invite',
+    POST: 'post',
     NORMAL: 'normal',
+}
+
+const MessageResponseStatus = {
+    NONE: 'none',
+    PENDING: 'pending',
+    ACCEPTED: 'accepted',
+    REJECTED: 'rejected',
 }
 
 module.exports = {
@@ -69,4 +77,5 @@ module.exports = {
     SystemActionType,
     RequestType,
     MessageType,
+    MessageResponseStatus,
 }

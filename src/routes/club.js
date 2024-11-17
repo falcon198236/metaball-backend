@@ -13,6 +13,9 @@ router.get('/created', checkListParam, catchError(club.get_mine));
 router.get('/joined/:_id', checkListParam, catchError(club.get_joined));
 router.get('/available', checkListParam, catchError(club.get_available_clubs));
 
+router.post('/add-member/:_id', checkListParam, catchError(club.add_member));
+router.delete('/remove-member/:_id', checkListParam, catchError(club.remove_member));
+
 router.get('/requested-users/:_id', checkListParam, catchError(club.get_requested_users));
 router.get('/invited-users/:_id', checkListParam, catchError(club.get_invited_users));
 router.get('/gather-users/:_id', correctQuery, catchError(club.get_available_users));

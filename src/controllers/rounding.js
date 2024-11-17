@@ -2,8 +2,9 @@ const moment = require('moment')
 const mongoose = require('mongoose');
 const Rounding = require('../models/rounding');
 const RoundingMembers = require('../models/rounding_members');
+const ClubMembers = require('../models/club_members');
 const { UserHidenField } = require('../constants/security');
-const { RequestType } = require('../constants/type');
+const { RequestType, RoundingMakeType } = require('../constants/type');
 const { 
     get_roundings: get_roundings_helper, 
     invite: invite_helper,
@@ -11,6 +12,7 @@ const {
 } = require('../helpers/rounding');
 const { get_users:get_users_helper } = require('../helpers/user');
 const { query } = require('express');
+const Club = require('../models/club');
 
 // create a rounding
 const create = async(req, res) => {
@@ -156,7 +158,6 @@ const get = async (req, res) => {
     if(idx > -1) requested_id = request_users[idx]._id;
     idx = invited_users.findIndex(e => e.user._id.toString() === currentUser._id.toString());
     if(idx > -1) invited_id = invited_users[idx]._id;
-    console.log(rounding.user.follow_rounding_ids, currentUser._id);
     const is_followed = currentUser.follow_rounding_ids.findIndex(e => e.toString() === rounding._id.toString()) > -1?true:false;
     return res.send({
         status: true,
@@ -211,13 +212,13 @@ const get_range = async (req, res) => {
     if (location) {
         query.location = location;
     }
-    
     for(let i = 0; i < days; i ++) {
         date2 = date1.clone().add(1, 'days');
         query.opening_date = {
             $gte: date1.toDate(),
             $lt: date2.toDate()
         };
+        console.log('@@@@@@@@@@', query);
         const count = await Rounding.countDocuments(query);
         result.push({date: date1.format('YYYY-MM-DD'), count});
         date1 = date2;
@@ -293,14 +294,21 @@ const get_recent = async (req, res) => {
 const get_available_users = async (req, res) => {
     const {currentUser} = req;
     const {_id} = req.params;
-    const {limit, skip, name, sex, start_age, end_age} = req.query;
+    const {limit, skip, name, sex, address, start_hit, end_hit,  start_age, end_age} = req.query;
     const rounding = await Rounding.findOne({_id}).catch(err => console.log(err.message));
     if (!rounding) {
         return res.status(400).send({
             status: false,
             code: 400,
-            error: 'there is no such rounding',
+            error: 'there is no such rounding1',
         });
+    }
+    let club_members;
+    if(rounding.type === RoundingMakeType.CLUB) {
+        const _club_members = await ClubMembers.find({_id: rounding.club, enabled: true});
+        if (_club_members) {
+            club_members = _club_members.map((e) => e.user);
+        }
     }
     const members = await RoundingMembers.find({rounding:_id}).catch(err => console.log(err.message));
     const rounding_users = members.map(e => {
@@ -315,21 +323,37 @@ const get_available_users = async (req, res) => {
             {fullname: {$regex: `${name}.*`, $options:'i' }},
         ];
     }
-    if (rounding_users.length > 0) {
-        query._id = {$nin: rounding_users};
+    if (address) {
+        if(query['$or'])
+            query['$or'].push({address: {$regex: `${address}.*`, $options:'i' }});
+        else
+            query['$or']= [{address: {$regex: `${address}.*`, $options:'i' }}];
     }
+    if (rounding_users.length > 0 && club_members.length > 0) {
+        query["$and"] = [{_id: {$nin: rounding_users}},{_id: {$in: club_members}}];
+    } else if (rounding_users.length > 0) {
+        query._id = {$nin: rounding_users};
+    }else if (club_members.length > 0) {
+        query._id = {$nin: club_users};
+    }
+
     if (sex) {
         query.sex = sex;
     }
     
-    if(start_age) {
+    if (start_age) {
         let age1 = moment().subtract(start_age, 'year');
+        age1.set({ month: 11, date: 31, hour:23, minutes:59 });
         query.birthday = {$lte: age1.toDate()};
     }
-    if(end_age) {
+    if (end_age) {
         let age2 = moment().subtract(end_age, 'year');
-        query.birthday = {... query.birthday, ...{$gte: age2.toDate()}};
+        age2.set({ month: 0, date: 1, hour:0, minutes:0 });
+        query.birthday = {...query.birthday, ...{$gte: age2.toDate()}};
     }
+    
+    if (start_hit) query.hit = {$gte: start_hit};
+    if (end_hit) query.hit = {...query.hit, ...{$lte: end_hit}};
     
     const {count, users} = await get_users_helper(query, limit, skip);
     return res.send({

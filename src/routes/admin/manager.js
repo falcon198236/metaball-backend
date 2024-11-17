@@ -13,7 +13,7 @@ router.delete('/', catchError(manager.removes));
 router.delete('/:_id', catchError(manager.remove));
 router.get('/', checkListParam, catchError(manager.gets));
 router.get('/:_id', catchError(manager.get));
-router.post('/change-pwd', catchError(manager.changePassword));
+router.post('/change-pwd', catchError(manager.change_password));
 router.post('/reset-pwd', catchError(manager.resetPassword));
 
 module.exports = router;

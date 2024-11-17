@@ -116,21 +116,26 @@ const removes = async (req, res) => {
 
 // get a blog with _id
 const get = async (req, res) => {
+    const { currentUser } = req;
     const { _id } = req.params;
     const query = {_id};
     const {count, blogs} = await get_blogs_helper(query, 1, 0);
 
-    if (count > 0) {
-        return res.send({
-            status: true,
-            code: 200,
-            data: blogs[0]
-        })
+    if (count == 0) {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            data: 'there is no blog',
+        });    
     }
-    return res.status(400).send({
-        status: false,
-        code: 400,
-        data: 'there is no blog',
+    const is_followed = currentUser.follow_blog_ids.findIndex(e => e.toString() === _id) > -1;
+    return res.send({
+        status: true,
+        code: 200,
+        data: {
+            ...blogs[0]._doc,
+            is_followed
+        }
     })
 };
 
@@ -155,13 +160,7 @@ const gets = async (req, res) => {
 // get recent blogs
 const get_recent = async (req, res) => {
     const { limit, skip} = req.query;
-    const start_date = new Date();
-    const query = {
-        created_at: {
-            $gte: start_date,
-        }
-    };
-    const {count, blogs} = await get_blogs_helper(query, limit, skip, -1);
+    const {count, blogs} = await get_blogs_helper({}, limit, skip, -1);
     return res.send({ status: true, code: 200, data: {count, blogs} });
 };
 

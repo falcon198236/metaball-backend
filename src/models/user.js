@@ -41,6 +41,7 @@ const UserSchema = new Schema(
       default: 0,
     },
     follow_user_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }], // followed users
+    block_user_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }], // block users
     follow_blog_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'blog' }], // followed blogs
     follow_rounding_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'rounding' }], // followed roundings
     

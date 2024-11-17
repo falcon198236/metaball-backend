@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const {MessageType} = require('../constants/type')
+const { MessageType, MessageResponseStatus } = require('../constants/type')
 const Schema = mongoose.Schema;
 
 const MessageSchema = new Schema(
@@ -10,6 +10,9 @@ const MessageSchema = new Schema(
     club: { type: mongoose.Schema.Types.ObjectId, ref: 'club' }, // club message
     file: {type: String, default: ''},
     type: {type: String, default: MessageType.NORMAL},
+    response_status: {type: String, default: MessageResponseStatus.NONE},
+    request_id: { type: mongoose.Schema.Types.ObjectId, ref: 'clubclub_members' }, // club member id
+    rounding: { type: mongoose.Schema.Types.ObjectId, ref: 'rounding' },
     status: { type: Boolean, default: false}
   },
   {

@@ -1,6 +1,7 @@
 const moment = require('moment');
 
 const Message = require('../models/message');
+const Rounding = require('../models/rounding');
 
 const get_dm_message = async(query, user, limit=10, skip = 0) => {
     const count = await Message.countDocuments(query)
@@ -45,13 +46,31 @@ const get_club_message = async(query, limit=10, skip = 0) => {
                 email: 1
             }
         })
+        .populate({
+            path: 'to_user',
+            select: {
+                logo: 1,
+                fullname: 1,
+                email: 1
+            }
+        })
+        .populate({
+            path: 'rounding',
+            select: {
+                _id: 1,
+                title: 1,
+                opening_date: 1,
+            }
+        })
         .sort({created_at: -1})
         .limit(limit)
         .skip(skip);
     return {count, messages};
 }
 
+
+
 module.exports = {
     get_dm_message,
-    get_club_message
+    get_club_message,
 }

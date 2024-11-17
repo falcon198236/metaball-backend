@@ -1,4 +1,5 @@
 const Message = require('../models/message');
+const ClubMembers = require('../models/club_members');
 const User = require('../models/user');
 const Club = require('../models/club');
 
@@ -6,11 +7,23 @@ const {
     get_dm_message: get_dm_message_helper, 
     get_club_message:get_club_message_helper 
 } = require('../helpers/message');
+const {get_club_members: get_club_members_helper} = require('../helpers/club');
+const { MessageType, RequestType, MessageResponseStatus } = require('../constants/type');
+const Rounding = require('../models/rounding');
 const SECTION = 'message';
 
 const send_dm = async(req, res) => {
     const {currentUser} = req;
     const { _id: _to_user } = req.params;
+    const to_user = await User.findOne({_id: _to_user}, {_id: 1, logo: 1});
+    
+    if (to_user.block_user_ids?.findIndex(e => e.toString() === currentUser._id.toString()) > -1) {
+        return res.status(205).send({
+            status: false,
+            code: 205,
+            error: 'you was blocked by this user',
+        });
+    }
     const { msg, type } = req.body;
     const _files = req.files?.map(f => f.path);
     const message = new Message({
@@ -26,13 +39,12 @@ const send_dm = async(req, res) => {
             status: false,
             code: 400,
             error: err.message,
-        })
+        });
     });
     const from_user = {
         _id: currentUser._id,
         logo: currentUser.logo,
     }
-    const to_user = await User.findOne({_id: _to_user}, {_id: 1, logo: 1});
     const data = {...result._doc};
     data.from_user = from_user;
     data.to_user = to_user;
@@ -46,14 +58,47 @@ const send_dm = async(req, res) => {
 const send_club = async(req, res) => {
     const {currentUser} = req;
     const { _id: club_id } = req.params;
-    const { msg, type } = req.body;
+    const { msg, type, to_user, rounding } = req.body;
     const _files = req.files?.map(f => f.path);
+    let club_member;
+    let response_status = MessageResponseStatus.NONE;
+    switch(type) {
+    case MessageType.REQUEST:
+        // in case that user send the request to CLUB
+        // create a request on ClubMembers
+        club_member = new ClubMembers({
+            user: currentUser._id,
+            club: club_id,
+            request_type: RequestType.REQUEST,
+            enabled: false,
+        });
+        response_status = MessageResponseStatus.PENDING;
+        break;
+    case MessageType.INVITE:
+        // in case that manager send the invite to any user
+        // create a invite  on ClubMembers
+        club_member = new ClubMembers({
+            user: to_user,
+            club: club_id,
+            request_type: RequestType.INVITE,
+            enabled: false,
+        });
+        response_status = MessageResponseStatus.PENDING;
+        break;
+    }
+    if(club_member) {
+        await club_member.save();
+    }
     const message = new Message({
         from_user: currentUser._id,
         file: _files?.length? _files[0] : '',
         club: club_id,
+        to_user,
         msg,
         type,
+        rounding,
+        response_status,
+        request_id: club_member?._id,
         status: true,
     });
 
@@ -70,6 +115,17 @@ const send_club = async(req, res) => {
         _id: currentUser._id,
         logo: currentUser.logo,
     };
+    if(to_user) {
+        const _to_user = await User.findOne({_id: to_user});
+        data.to_user = {
+            _id: to_user,
+            logo: _to_user?.logo
+        }
+    }
+    if (rounding) {
+        const _rounding = await Rounding.findOne({_id: rounding});
+        data.rounding = _rounding;
+    }
 
     return res.send({status: true, code: 200, data});
 };
@@ -206,7 +262,13 @@ const get_club_message = async(req, res) => {
     const query = {
         club: club_id,
     };
-
+    const members = await get_club_members_helper(club_id);
+    
+    if(members.findIndex(e => e.toString() === currentUser._id.toString()) === -1) {
+        // show only self message for non member
+        query["$or"] = [{from_user: currentUser._id}, {to_user: currentUser._id}];
+    }
+    
     const {count, messages} = await get_club_message_helper(query, limit, skip);
     return res.send({
         status: true,
@@ -224,7 +286,10 @@ const get_clubs = async(req, res) => {
     const { limit, skip } = req.query;
     const query = {
         club: {$exists: true},
-        from_user: currentUser._id,
+        $or: [
+                {from_user: currentUser._id}, 
+                {to_user: currentUser._id}
+            ]
     };
     const messages = await Message.aggregate([
         {
@@ -312,6 +377,7 @@ const get_users = async(req, res) => {
             user.direction = 'receive';
         }
 
+        if (currentUser.block_user_ids?.findIndex(e => e.toString() === user.id.toString()) > -1) continue;
         if(user.id && !users.some((e) => e.info._id.toString() === user.id.toString())) {
             const _user = await User.findOne({_id: user.id}, {_id: 1, email: 1, logo: 1, fullname: 1});
             if(_user) {
@@ -331,6 +397,22 @@ const get_users = async(req, res) => {
     });
 }
 
+const remove = async( req, res) => {
+    const {_id} = req.params;
+    const result = await Message.deleteOne({_id}).catch(err =>{
+        return res.statu(400).send({
+            status: false,
+            code: 400,
+            data: 'can`t remove message',
+        });
+    })
+    return res.send({
+        status: true,
+        code: 200,
+        data: result,
+    });
+}
+
 module.exports = {
     // addmin
     get_dm_message_for_user,
@@ -344,4 +426,6 @@ module.exports = {
     get_dm_unread_message,
     get_club_message,
     get_club_unread_message,
+
+    remove,
 }

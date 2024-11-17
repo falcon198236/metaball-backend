@@ -193,8 +193,8 @@ const get = async (req, res) => {
         data: _manager,
     })
 };
-
-const changePassword = async (req, res) => {
+// change paassword of current manager
+const change_password = async (req, res) => {
     const { currentUser } = req;
     const { password } = req.body;
 
@@ -266,6 +266,6 @@ module.exports = {
     logout,
     get,
     gets,
-    changePassword,
+    change_password,
     resetPassword,
 }

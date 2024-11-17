@@ -83,9 +83,15 @@ const request = async(club_id, fromUser) =>{
         return false;
     }
 }
+
+const get_club_members = async(_id) => {
+    const _club_members = await ClubMembers.find({club: _id, enabled: true});
+    return _club_members.map(e=>e.user);
+}
 module.exports = {
     remove_fields,
     get_clubs,
     request,
-    invite
+    invite,
+    get_club_members,
 }

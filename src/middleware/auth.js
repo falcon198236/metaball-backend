@@ -4,7 +4,7 @@ const api = require('../configs/api.js');
 const { UserHidenField } = require('../constants/security');
 const checkAuth = async (req, res, next) => {
   const bearer_token = req.get('Authorization');
-  const token = bearer_token.replace('Bearer ', '');
+  const token = bearer_token?.replace('Bearer ', '');
   let decoded; 
   try {
     decoded = jwt.verify(token, api.SECURITY_KEY);

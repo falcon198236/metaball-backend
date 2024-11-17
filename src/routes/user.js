@@ -7,18 +7,13 @@ const { upload } = require('../middleware/file');
 const { correctBody } = require('../middleware/variable');
 const router = express.Router();
 
-router.post('/signup', correctBody, catchError(user.signup));
-router.post('/login', catchError(user.login));
+router.get('/', catchError(user.me));
+router.get('/:_id', catchError(user.profile));
 
-router.get('/', checkAuth, catchError(user.me));
-router.get('/:_id', checkAuth, catchError(user.profile));
+router.put('/', upload.array('files', 1), correctBody, catchError(user.update));
 
-router.put('/', checkAuth, upload.array('files', 1), correctBody, catchError(user.update));
+router.post('/pwd', catchError(user.change_password));
+router.post('/block', catchError(user.block_user));
 
-router.post('/pwd', checkAuth, catchError(user.changePassword));
-
-router.post('/forgot', catchError(user.forgot));
-router.post('/forget-code', catchError(user.check_forgot_code));
-router.post('/reset-pwd', catchError(user.reset_password));
 
 module.exports = router;

@@ -219,6 +219,7 @@ const set_blog = async (req, res) => {
     const { currentUser } = req;
     const { _id } = req.body;
     const a = currentUser.follow_blog_ids.findIndex(e => e.toString() === _id);
+    
     if (a >= 0) {
         return res.status(400).send({
             status: false,

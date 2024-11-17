@@ -11,8 +11,13 @@ const number_variables = [
   // rounding model
   'age_start',
   'age_end',
+
   'max_members',
   'cost',
+
+  'age_hit',
+  'age_hit',
+  
 ]
 
 const array_variables = [

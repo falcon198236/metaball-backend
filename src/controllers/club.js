@@ -4,10 +4,12 @@ const fs = require('fs');
 const Club = require('../models/club');
 const ClubMembers = require('../models/club_members');
 const { UserHidenField } = require('../constants/security');
-const { RequestType } = require('../constants/type');
+const { RequestType, MessageResponseStatus } = require('../constants/type');
 const { get_clubs: get_clubs_helper, invite: invite_helper, request: request_helper } = require('../helpers/club');
 const User = require('../models/user');
 const { get_users:get_users_helper } = require('../helpers/user');
+const Message = require('../models/message');
+const { query } = require('express');
 
 const create = async(req, res) => {
     const {currentUser} = req;
@@ -248,7 +250,7 @@ const get_mine = async (req, res) => {
 const get_available_users = async (req, res) => {
     const {currentUser} = req;
     const {_id} = req.params;
-    const {limit, skip, name, sex, start_age, end_age} = req.query;
+    const {limit, skip, name, sex, address, start_hit, end_hit, start_age, end_age} = req.query;
     const club = await Club.find({_id});
     if (!club) {
         return res.status(400).send({
@@ -269,19 +271,29 @@ const get_available_users = async (req, res) => {
             {fullname: {$regex: `${name}.*`, $options:'i' }},
         ];
     }
+    if (address) {
+        if(query['$or'])
+            query['$or'].push({address: {$regex: `${address}.*`, $options:'i' }});
+        else
+            query['$or']= [{address: {$regex: `${address}.*`, $options:'i' }}];
+    }
     if (sex) {
         query.sex = sex;
     }
     
-    if(start_age) {
+    if (start_age) {
         let age1 = moment().subtract(start_age, 'year');
+        age1.set({ month: 11, date: 31, hour:23, minutes:59 });
         query.birthday = {$lte: age1.toDate()};
     }
-    if(end_age) {
+    if (end_age) {
         let age2 = moment().subtract(end_age, 'year');
-        query.birthday = {... query.birthday, ...{$gte: age2.toDate()}};
+        age2.set({ month: 0, date: 1, hour:0, minutes:0 });
+        query.birthday = {...query.birthday, ...{$gte: age2.toDate()}};
     }
     
+    if (start_hit) query.hit = {$gte: start_hit};
+    if (end_hit) query.hit = {...query.hit, ...{$lte: end_hit}};
     const {count, users} = await get_users_helper(query, limit, skip);
     return res.send({
         status: true,
@@ -291,7 +303,7 @@ const get_available_users = async (req, res) => {
             users,
         }
     });
-}
+};
 
 // get users requested to this club 
 const get_requested_users = async (req, res) => {
@@ -422,7 +434,11 @@ const reject_request = async(req, res) => {
             code: 400,
             error: err.message
         });
-    })
+    });
+
+    // update the responsive status of request message to REJECTED.
+    await Message.updateOne({request_id: _id}, {$set: {response_status: MessageResponseStatus.REJECTED}});
+
     return res.send({
         status: true,
         code: 200,
@@ -575,32 +591,13 @@ const allow_request = async(req, res) => {
             error: err.message,
         })
     });
+
+    // update the responsive status of request message to ACCEPTED.
+    await Message.updateOne({request_id: _id}, {$set: {response_status: MessageResponseStatus.ACCEPTED}});
+    
     return res.send({
         status: true,
         data: result,
-    })
-};
-
-const remove_user = async(req, res) => {
-    const { currentUser } = req; // currentUser is the owner of Club
-    const { _id: club_id } = req.params;
-    const { user } = req.body;
-    const query = {
-        club: club_id,
-        user,
-        enabled: true
-    }
-    const result = await ClubMembers.deleteOne(query).catch(err => {
-        return res.status(400).send({
-            status: false,
-            code: 400,
-            error: err.message,
-        })
-    });
-    return res.send({
-        status: true,
-        code: 200,
-        data: result
     })
 };
 
@@ -649,6 +646,53 @@ const get_joined = async(req, res) => {
         }
     });
 }
+
+// add member directly for testing
+const add_member = async(req, res) => {
+    const { currentUser } = req; // currentUser is the owner of Club
+    const { _id: club_id } = req.params;
+    const { user } = req.body;
+    const club_member = new ClubMembers({
+        user,
+        club: club_id,
+        request_type: RequestType.REQUEST,
+        enabled: true,
+    });
+
+    const result = await club_member.save();
+
+    return res.send({
+        status: true,
+        code: 200,
+        data: result
+    })
+}
+
+// remove member directly for testing
+const remove_member = async(req, res) => {
+    const { currentUser } = req; // currentUser is the owner of Club
+    const { _id: club_id } = req.params;
+    const { user } = req.body;
+    const query = {
+        club: club_id,
+        user,
+        enabled: true
+    }
+    const result = await ClubMembers.deleteOne(query).catch(err => {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: err.message,
+        })
+    });
+    return res.send({
+        status: true,
+        code: 200,
+        data: result
+    });
+};
+
+
 module.exports = {
     create,
     update,
@@ -675,5 +719,6 @@ module.exports = {
     invite_user,
     allow_request,
     reject_request,
-    remove_user,
+    add_member,
+    remove_member,
 }
