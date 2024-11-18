@@ -250,11 +250,13 @@ const profile = async (req, res) => {
     }
 
     const is_followed = currentUser.follow_user_ids.findIndex(e => e.toString() === _id.toString()) > -1? true: false;
+    const is_blocked = currentUser.block_user_ids.findIndex(e => e.toString() === _id.toString()) > -1? true: false;
     return res.send({
         status,
         data: {
             ...profile,
-            is_followed
+            is_followed,
+            is_blocked,
         }
     });
 };
@@ -489,10 +491,43 @@ const block_user = async (req, res) => {
         status: true,
         code: 200,
         data: result
-    })
-
+    });
 }
 
+const unblock_user = async (req, res) => {
+    const {currentUser} = req;
+    const {_id} = req.body;
+    const user = await User.findOne({_id});
+    if (!user) {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: 'there is no user',
+        });
+    }
+    const index = currentUser.block_user_ids?.findIndex(e => e.toString() === _id);
+    if(index == -1) {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: 'this user was not blocked',
+        })
+    }
+    const block_user_ids = currentUser.block_user_ids || [];
+    block_user_ids.splice(index, 1);
+    const result = await User.updateOne({_id: currentUser._id}, {$set: {block_user_ids}}).catch(err =>{
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: err.message
+        });
+    });
+    return res.send({
+        status: true,
+        code: 200,
+        data: result
+    });
+}
 ////////////////////////////////////////////////////////////////
 
 module.exports = {
@@ -514,4 +549,5 @@ module.exports = {
     reset_password,
     forgot_pwd,
     block_user,
+    unblock_user,
 }

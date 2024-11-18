@@ -14,6 +14,7 @@ router.put('/', upload.array('files', 1), correctBody, catchError(user.update));
 
 router.post('/pwd', catchError(user.change_password));
 router.post('/block', catchError(user.block_user));
+router.post('/unblock', catchError(user.unblock_user));
 
 
 module.exports = router;
