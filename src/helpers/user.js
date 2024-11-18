@@ -36,7 +36,9 @@ const create = async(data) => {
 
 // get user's profile with themes, clubs, blogs,...
 const get_profile = async(_id) => {
-    const _profile = await User.findOne({_id}, UserHidenField).catch(err => console(err.message));
+    const _profile = await User.findOne({_id}, UserHidenField)
+        .populate('location')
+        .catch(err => console(err.message));
     if (!_profile) {
         return {status: false};
     }

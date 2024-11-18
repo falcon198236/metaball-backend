@@ -1,7 +1,4 @@
 const mongoose = require('mongoose');
-const { appdb } = require('../db');
-const { Socket } = require('socket.io');
-const string = require('@hapi/joi/lib/types/string');
 
 const Schema = mongoose.Schema;
 
@@ -26,6 +23,7 @@ const UserSchema = new Schema(
     introduction: {type: String, default: ''},
     occupation: {type: String, default: ''},
     occupation: {type: String, default: ''},
+    location: { type: mongoose.Schema.Types.ObjectId, ref: 'location'}, // 主办地
     themes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'settings' }],
     accesses: [{type: mongoose.Schema.Types.ObjectId, ref: 'access'}], //only for admin
     experience: { //高尔夫历

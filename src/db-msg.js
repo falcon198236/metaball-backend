@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
  * Get port from environment and store in Express.
  */
 
-const { DB_PORT } = require('./configs/database');
+const { DB_MSG_PORT } = require('./configs/database');
 /**
  * Connect Monogo Database.
  */
@@ -13,7 +13,7 @@ const { DB_PORT } = require('./configs/database');
  */
 mongoose.set('strictQuery', true);
 mongoose
-  .connect(DB_PORT, {
+  .connect(DB_MSG_PORT, {
     // useNewUrlParser: true,
     // useUnifiedTopology: true,
   })

@@ -192,7 +192,7 @@ const get_mine = async (req, res) => {
 };
 
 const get_range = async (req, res) => {
-    const { start_date, days, sex, location, golf_themes, golf_experiences, golf_hits } = req.query;
+    const { start_date, days, sex, locations, golf_themes, golf_experiences, golf_hits } = req.query;
     let date1 = moment(start_date);
     const query = {};
     const result = [];
@@ -209,8 +209,8 @@ const get_range = async (req, res) => {
     if (golf_themes) {
         query.golf_themes = {$in:golf_themes};
     }
-    if (location) {
-        query.location = location;
+    if (locations) {
+        query.location = {$in: locations};
     }
     for(let i = 0; i < days; i ++) {
         date2 = date1.clone().add(1, 'days');
@@ -233,7 +233,7 @@ const get_range = async (req, res) => {
 
 // get the roundings to proceed on the selected date.
 const get_date = async (req, res) => {
-    const { limit, skip, date, sex, location, golf_themes, golf_experiences, golf_hits } = req.query;
+    const { limit, skip, date, sex, locations, golf_themes, golf_experiences, golf_hits } = req.query;
     const _date = new Date(date);
     const start_date = new Date(_date.setHours(0,0,0, 0));
     const end_date = new Date(_date.setHours(23,59,59, 999));
@@ -255,8 +255,8 @@ const get_date = async (req, res) => {
     if (golf_experiences) {
         query.golf_experiences = {$in:golf_experiences};
     }
-    if (location) {
-        query.location = location;
+    if (locations) {
+        query.location = {$in: locations};
     }
     
     const {count, roundings} = await get_roundings_helper(query, limit, skip);
@@ -294,7 +294,7 @@ const get_recent = async (req, res) => {
 const get_available_users = async (req, res) => {
     const {currentUser} = req;
     const {_id} = req.params;
-    const {limit, skip, name, sex, address, start_hit, end_hit,  start_age, end_age} = req.query;
+    const {limit, skip, name, sex, address, location, start_hit, end_hit,  start_age, end_age} = req.query;
     const rounding = await Rounding.findOne({_id}).catch(err => console.log(err.message));
     if (!rounding) {
         return res.status(400).send({
@@ -341,6 +341,10 @@ const get_available_users = async (req, res) => {
         query.sex = sex;
     }
     
+    if (location) {
+        query.location = location;
+    }
+
     if (start_age) {
         let age1 = moment().subtract(start_age, 'year');
         age1.set({ month: 11, date: 31, hour:23, minutes:59 });

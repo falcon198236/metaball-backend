@@ -250,7 +250,7 @@ const get_mine = async (req, res) => {
 const get_available_users = async (req, res) => {
     const {currentUser} = req;
     const {_id} = req.params;
-    const {limit, skip, name, sex, address, start_hit, end_hit, start_age, end_age} = req.query;
+    const {limit, skip, name, sex, address, location, start_hit, end_hit, start_age, end_age} = req.query;
     const club = await Club.find({_id});
     if (!club) {
         return res.status(400).send({
@@ -290,6 +290,9 @@ const get_available_users = async (req, res) => {
         let age2 = moment().subtract(end_age, 'year');
         age2.set({ month: 0, date: 1, hour:0, minutes:0 });
         query.birthday = {...query.birthday, ...{$gte: age2.toDate()}};
+    }
+    if (location) {
+        query.location = location;
     }
     
     if (start_hit) query.hit = {$gte: start_hit};

@@ -3,7 +3,7 @@ const http = require('http');
 const { ENV_PATH } = require('../src/configs/path');
 
 require('dotenv').config({ path: ENV_PATH });
-require('../src/db');
+require('../src/db-msg');
 
 var socketio = require('socket.io');
 const chat = require('../src/controllers/chat');
@@ -12,7 +12,7 @@ const app = express();
 
 let server = http.createServer(app);
 
-let port = normalizePort(process.env.MSG_PORT || '3001');
+const port = normalizePort(process.env.MSG_PORT || '5001');
 app.set('port', port);
 server.listen(port);
 server.on('error', onError);
