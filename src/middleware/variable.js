@@ -51,7 +51,13 @@ const correctBody = async (req, res, next) => {
     if(array_variables.includes(key)) {
       if(!Array.isArray(req.body[key]))
       {
-          const values = req.body[key]?.split(',');
+          const _values = req.body[key]?.split(',');
+          const values = [];
+          _values.forEach(element => {
+            if(element.length !== '') {
+              values.push(element);
+            }
+          });
           req.body[key] = values;
       }
     }
