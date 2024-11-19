@@ -36,6 +36,7 @@ const array_variables = [
 
   // blog
   'theme_ids',
+  'file_urls',
   // rounding
   'toUser'
 ]
@@ -50,13 +51,7 @@ const correctBody = async (req, res, next) => {
     if(array_variables.includes(key)) {
       if(!Array.isArray(req.body[key]))
       {
-          const ids = req.body[key]?.split(',');
-          const values = [];
-          ids.forEach(element => {
-            if(ObjectId.isValid(element)) {
-              values.push(new mongoose.Types.ObjectId(element));
-            }
-          });
+          const values = req.body[key]?.split(',');
           req.body[key] = values;
       }
     }

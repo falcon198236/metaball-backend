@@ -8,7 +8,7 @@ const { checkAuth, } = require('../middleware/auth')
 const router = express.Router();
 
 router.post('/', checkAuth, upload.array('files', 5), correctBody, catchError(blog.create));
-router.put('/:_id', checkAuth, upload.array('files', 5), catchError(blog.update));
+router.put('/:_id', checkAuth, upload.array('files', 5), correctBody, catchError(blog.update));
 router.delete('/:_id', checkAuth, catchError(blog.remove));
 
 router.get('/user/:_id', checkAuth, checkListParam, catchError(blog.get_user));
