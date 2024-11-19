@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Systemlog = require('../models/systemlog');
 const { UserHidenField } = require('../constants/security');
+const api = require('../configs/api');
 
 // remove a review
 const remove = async (req, res) => {
@@ -91,10 +92,28 @@ const gets = async (req, res) => {
     return res.send({ status: true, code: 200, data: {count, syslogs} });
 };
 
+const set_enable = async (req, res) => {
+    const { enable } = req.body;
+    api.SYSLOG_ENABLE = enable;
+    return res.send({
+        status: true,
+        code: 200
+    })
+}
+
+const get_status = async (req, res) => {
+    return res.send({
+        status: true,
+        code: 200,
+        data: api.SYSLOG_ENABLE
+    })
+}
 
 module.exports = {
     remove,
     removes,
     get,
     gets,
+    set_enable,
+    get_status,
 }

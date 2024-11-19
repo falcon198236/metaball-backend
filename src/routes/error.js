@@ -1,12 +1,16 @@
-const {sys_api_log} = require('../helpers/systemlog')
+const {sys_api_log} = require('../helpers/systemlog');
+const api = require('../configs/api');
+
 const catchError = (callback) => {
   return async (req, res, next) => {
     try {
       const result = await callback(req, res, next);
-      sys_api_log(req, {status: result.statusCode === 200? true: false, code: result.statusCode});
+      if (api.SYSLOG_ENABLE)
+        sys_api_log(req, {status: result.statusCode === 200? true: false, code: result.statusCode});
     } catch (e) {
       console.error(e);
-      sys_api_log(req, {status: false, code: 500, error: 'Internal server error'});
+      if (api.SYSLOG_ENABLE)
+        sys_api_log(req, {status: false, code: 500, error: 'Internal server error'});
       return res.status(500).send({
         status: false,
         error: 'internal_server_error',
