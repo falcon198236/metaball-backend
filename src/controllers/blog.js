@@ -46,6 +46,8 @@ const create = async(req, res) => {
 const update = async(req, res) => {
     const { currentUser } = req;
     const { _id, } = req.params;
+    const { file_urls } = req.body;
+    
     const _files = req.files?.map(f => f.path);
     
     const blog = await Blog.findOne({_id}).catch(err=> console.log(err.message));
@@ -59,14 +61,21 @@ const update = async(req, res) => {
 
     if (_files?.length > 0 && blog['files']) {
         blog['files']?.forEach(f => {
-            if(fs.existsSync(f)) {
+            if( file_urls.findIndex(e => e === f) < 0
+                && fs.existsSync(f))
+            {
+                // do not remove the file if the file exists on keeping list
                 fs.unlinkSync(f);    
             }
         });
     }
     const data = {... req.body};
-    if (_files?.length) data.files = _files;
+    delete data.file_urls;
     
+    data.files = [];
+    if (file_urls) data.files = [...file_urls];
+    if (_files?.length) data.files = [...file_urls, ..._files];
+
     const result = await Blog.updateOne({_id}, {$set: data}).catch((err) => {
         return res.status(400).send({
             status: false,
