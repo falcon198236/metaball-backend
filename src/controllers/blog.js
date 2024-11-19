@@ -47,7 +47,7 @@ const update = async(req, res) => {
     const { currentUser } = req;
     const { _id, } = req.params;
     const { file_urls } = req.body;
-    
+    console.log('qqqqqq', file_urls);
     const _files = req.files?.map(f => f.path);
     
     const blog = await Blog.findOne({_id}).catch(err=> console.log(err.message));

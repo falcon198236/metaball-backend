@@ -59,6 +59,7 @@ const correctBody = async (req, res, next) => {
             }
           });
           req.body[key] = values;
+          console.log('aaaaaaa', key, req.body[key]);
       }
     }
   });
