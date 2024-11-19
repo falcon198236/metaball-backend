@@ -172,6 +172,7 @@ const login = async(req, res) => {
             follow_rounding_ids: 0
         })
         .populate('themes')
+        .populate('location')
         .catch(err => {
         console.log('there is no user');
     });
