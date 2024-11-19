@@ -74,7 +74,7 @@ const update = async(req, res) => {
     
     data.files = [];
     if (file_urls) data.files = [...file_urls];
-    if (_files?.length) data.files = [...file_urls, ..._files];
+    if (_files?.length) data.files = [...data.files, ..._files];
 
     const result = await Blog.updateOne({_id}, {$set: data}).catch((err) => {
         return res.status(400).send({
