@@ -61,7 +61,7 @@ const update = async(req, res) => {
 
     if (_files?.length > 0 && blog['files']) {
         blog['files']?.forEach(f => {
-            if( file_urls.findIndex(e => e === f) < 0
+            if( file_urls?.findIndex(e => e === f) < 0
                 && fs.existsSync(f))
             {
                 // do not remove the file if the file exists on keeping list
