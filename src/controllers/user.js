@@ -290,46 +290,9 @@ const change_password = async (req, res) => {
 
 const email_send_code = async (req, res) => {
     const { email } = req.body;
-    // send email
-    // const user = await User.findOne({email});
-    // if(!user) {
-    //     return res.status(400).send({
-    //         status: false,
-    //         code: 400,
-    //         error: 'there is no user',
-    //     })
-    // }
-    // if(user.forgot_info?.date) {
-    //     const saved_time = moment(user.forgot_info.date);
-    //     const now = moment();
-    //     const diff_time = now.diff(saved_time, 'seconds');
-    //     if(diff_time < 60) {
-    //         return res.status(400).send({
-    //             status: false,
-    //             code: 400,
-    //             error: 'You already send the request for this. please wait a little'
-    //         });
-    //     }
-    // }
-
-    const templatePath = path.join('./', 'templates', 'forgot.ejs');
+    const templatePath = path.join('./', 'templates', 'verify.ejs');
     const template = fs.readFileSync(templatePath, 'utf-8');
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // const forgot_info = {
-    //     code,
-    //     date: Date.now()
-    // }
-    
-    // await User.updateOne({_id: user._id}, {
-    //     $set: {forgot_info},
-    // }).catch(err => {
-    //     return res.status(400).send({
-    //         status: false,
-    //         code: 400,
-    //         error: 'can`t send the forgot email.',
-    //     })
-    // });
 
     const htmlContent = ejs.render(template, { email, code });
 
