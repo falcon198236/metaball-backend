@@ -13,6 +13,7 @@ const message = require('./message');
 const follow = require('./follow');
 const review = require('./review');
 const service = require('./service');
+const golfcourse = require('./golfcourse');
 const syslog = require('./syslog');
 const { login} = require('../../controllers/manager');
 const { checkAdminAuth } = require('../../middleware/auth')
@@ -35,6 +36,7 @@ router.use('/message', checkAdminAuth, message);
 router.use('/follow', checkAdminAuth, follow);
 router.use('/review', checkAdminAuth, review);
 router.use('/service', checkAdminAuth, service);
+router.use('/golfcourse', checkAdminAuth, golfcourse);
 router.use('/syslog', checkAdminAuth, syslog);
 
 router.post('/login', catchError(login));

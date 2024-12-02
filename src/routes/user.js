@@ -16,5 +16,9 @@ router.post('/pwd', catchError(user.change_password));
 router.post('/block', catchError(user.block_user));
 router.post('/unblock', catchError(user.unblock_user));
 
+router.post('/google-signup', catchError(user.google_signup));
+router.post('/google-login', catchError(user.google_login));
+router.post('/x-signup', catchError(user.x_signup));
+router.post('/x-login', catchError(user.x_login));
 
 module.exports = router;

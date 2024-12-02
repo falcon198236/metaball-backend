@@ -93,12 +93,27 @@ const change_password = async (user_id, password) => {
     return {status: true};
 }
 
-const remove_users = async(query) => {
+const social_login = async(email) => {
+    const user = await User.findOne({email});
+    if (!user) {
+        return {status: false, code: 400};
+    }
+    const payload = {
+        id: user.id,
+        nickname: user.nickname,
+        email: user.email,
+    };
     
+    const token = jwt.sign(payload, api.SECURITY_KEY);
+    user.last_login_at = new Date();
+    const _user = { ...user._doc, last_login_at: new Date, is_social_login: true};
+    await User.replaceOne({_id: user._id}, _user, { upsert: true }).catch(err => console.log(err));
+    return {status: true, token, user: _user};
 }
 module.exports = {
     create,
     get_profile,
     get_users,
     change_password,
+    social_login,
 }
