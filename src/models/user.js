@@ -44,6 +44,7 @@ const UserSchema = new Schema(
     follow_rounding_ids: [{ type: mongoose.Schema.Types.ObjectId, ref: 'rounding' }], // followed roundings
     
     last_login_at: Date, 
+    is_social_login: {type: Boolean, default: false},
     role: {type: Number, default: 2},
     deleted: {type: Boolean, default: false},
     socket_id: String,

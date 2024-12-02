@@ -4,10 +4,18 @@ const fs = require('fs');
 const path = require('path');
 const ejs = require('ejs');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require("google-auth-library");
+
 const User = require('../models/user');
-const { change_password: change_password_helper } = require('../helpers/user');
+
+const { 
+    change_password: change_password_helper,
+    social_login: social_login_helper,
+} = require('../helpers/user');
 const api = require('../configs/api');
 const sgMail = require('@sendgrid/mail');
+const googleClient = new OAuth2Client(api.GOOGLE_API_CLIENT_ID);
+const xClient = new OAuth2Client(api.X_API_CLIENT_ID);
 
 // Set API key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -18,6 +26,7 @@ const {
 } = require('../helpers/user');
 const { UserHidenField } = require('../constants/security');
 const { error } = require('console');
+const app = require('../app');
 
 const SECTION = 'user';
 const signup = async(req, res) => {
@@ -195,7 +204,6 @@ const login = async(req, res) => {
         id: user.id,
         nickname: user.nickname,
         email: user.email,
-        phone: user.phone
     };
     // const token = jwt.sign(payload, api.SECURITY_KEY, {
     //     expiresIn: 86400 // expires in 24 hours //86400
@@ -492,6 +500,110 @@ const unblock_user = async (req, res) => {
         data: result
     });
 }
+
+// google sign up with google token
+const google_signup = async (req, res) =>{
+    const {token: social_token} = req.body;
+    let email;
+    try {
+        const ticket = await googleClient.verifyIdToken({
+          idToken: social_token,
+          audience: app.GOOGLE_CLIENT_ID,
+        });
+        const _payload = ticket.getPayload();
+        email = _payload["email"];
+        const name = _payload["name"];
+
+        const {status: status_create, data: code, error} = await createUser({
+            email,
+            fullname: name,
+            password: 'google',
+        });
+        if (!status_create) {
+            throw new Error(error);
+        }
+    } catch (err) {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: err.message,
+        });
+    }
+    
+    const {status, token, user} = social_login_helper(email); 
+    if (!status) {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: 'can`t login with google account',
+        });
+    }
+    return res.send({
+        status: true,
+        data: {
+            token,
+            user,
+        }
+    })
+
+    
+}
+// google login with google token
+const google_login = async (req, res) =>{
+    const {token: social_token} = req.body;
+    let email;
+    try {
+        const ticket = await googleClient.verifyIdToken({
+          idToken: social_token,
+          audience: app.GOOGLE_CLIENT_ID,
+        });
+        const _payload = ticket.getPayload();
+        email = _payload["email"];
+    } catch (err) {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: err.message,
+        });
+    }
+    
+    const {status, token, user} = social_login_helper(email); 
+    if (!status) {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: 'can`t login with google account',
+        });
+    }
+    return res.send({
+        status: true,
+        data: {
+            token,
+            user,
+        }
+    })
+}
+
+// x sign up with google token
+const x_signup = (req, res) =>{
+    const {token: social_token} = req.body;
+    return res.send({
+        status: true,
+        code: 200,
+        data: result,
+    });
+}
+
+// x login with google token
+const x_login = (req, res) =>{
+    const {token: social_token} = req.body;
+    return res.send({
+        status: true,
+        code: 200,
+        data: result,
+    });
+}
+
 ////////////////////////////////////////////////////////////////
 
 module.exports = {
@@ -514,4 +626,10 @@ module.exports = {
     forgot_pwd,
     block_user,
     unblock_user,
+
+    // social sign up & login
+    google_signup,
+    google_login,
+    x_signup,
+    x_login,
 }
