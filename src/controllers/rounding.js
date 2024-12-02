@@ -118,7 +118,7 @@ const get = async (req, res) => {
             select: UserHidenField
         })
         .populate('club')
-        .populate('golfcourse')
+        .populate('address')
     .catch(err => console.log(err.message));
     if(!rounding) {
         return res.status(400).send({

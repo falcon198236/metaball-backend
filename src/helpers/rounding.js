@@ -12,7 +12,7 @@ const get_roundings = async (query, limit = 10, skip = 0, sort = 1) =>{
             select: UserHidenField,
         })
         .populate('club')
-        .populate('golfcourse')
+        .populate('address')
         .sort({created_at: sort})
         .limit(limit)
         .skip(skip)
