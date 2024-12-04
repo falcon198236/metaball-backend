@@ -158,7 +158,6 @@ const get = async (req, res) => {
         status: true,
         data: {
             ...user._doc,
-            is_followed,
         },
     })
 };
