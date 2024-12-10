@@ -108,26 +108,39 @@ const get = async (req, res) => {
     })
 };
 
+const activate = async(req, res) => {
+    const { _id, } = req.params;
+    const { active } = req.body;
+    const result = await Settings.updateOne({_id}, {$set: {active}}).catch((err) => {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: err.message,
+        });
+    });
+    return res.send({status: true, code: 200, data: result});
+};
+
 // it should be used on client side
 const get_type_hit = async (req, res) => {
-    const data = await Settings.find({type: SettingsType.HIT}).sort({title: 1}).catch(err=>console.log(err.message));
+    const data = await Settings.find({type: SettingsType.HIT, active: true}).sort({title: 1}).catch(err=>console.log(err.message));
     return res.send({status: true, data});
 };
 
 // user's themes
 const get_type_user_theme = async (req, res) => {
-    const data = await Settings.find({type: SettingsType.THEME}).sort({title: 1}).catch(err=>console.log(err.message));
+    const data = await Settings.find({type: SettingsType.THEME, active: true}).sort({title: 1}).catch(err=>console.log(err.message));
     return res.send({status: true, data});
 };
 
 // user's themes
 const get_type_blog_theme = async (req, res) => {
-    const data = await Settings.find({type: SettingsType.BLOG}).sort({title: 1}).catch(err=>console.log(err.message));
+    const data = await Settings.find({type: SettingsType.BLOG, active: true}).sort({title: 1}).catch(err=>console.log(err.message));
     return res.send({status: true, data});
 };
 
 const get_type_experience = async (req, res) => {
-    const data = await Settings.find({type: SettingsType.EXPERIENCE}).sort({title: 1}).catch(err=>console.log(err.message));
+    const data = await Settings.find({type: SettingsType.EXPERIENCE, active: true}).sort({title: 1}).catch(err=>console.log(err.message));
     return res.send({status: true, data});
 };
 
@@ -139,6 +152,7 @@ module.exports = {
     removes,
     get,
     gets,
+    activate,
 
     get_type_hit,
     get_type_experience,

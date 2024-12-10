@@ -16,6 +16,7 @@ const SettingsSchema = new Schema(
     },
     file: { type: String, default: ''},
     enable_feadback: { type: Boolean, default: true},
+    active: { type: Boolean, default: true},
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

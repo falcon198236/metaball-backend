@@ -16,4 +16,5 @@ router.put('/:_id', upload.array('files', 1), catchError(settings.update));
 router.delete('/', catchError(settings.removes));
 router.delete('/:_id', catchError(settings.remove));
 
+router.post('/:_id', catchError(settings.activate));
 module.exports = router;
