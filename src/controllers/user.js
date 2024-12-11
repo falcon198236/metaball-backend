@@ -88,6 +88,7 @@ const gets = async (req, res) => {
     
     const count = await User.countDocuments(query);
     const users = await User.find(query, UserHidenField)
+        .populate('location')
         .limit(limit)
         .skip(skip);
 
