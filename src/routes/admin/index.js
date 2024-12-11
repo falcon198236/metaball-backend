@@ -15,7 +15,7 @@ const review = require('./review');
 const service = require('./service');
 const golfcourse = require('./golfcourse');
 const syslog = require('./syslog');
-const { login} = require('../../controllers/manager');
+const { login, verify} = require('../../controllers/manager');
 const { checkAdminAuth } = require('../../middleware/auth')
 
 const {catchError} = require('../error');
@@ -40,6 +40,7 @@ router.use('/golfcourse', checkAdminAuth, golfcourse);
 router.use('/syslog', checkAdminAuth, syslog);
 
 router.post('/login', catchError(login));
+router.get('/verify', checkAdminAuth, catchError(verify));
 
 
 module.exports = router;

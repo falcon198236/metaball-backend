@@ -39,6 +39,14 @@ const update = async(req, res) => {
     })
 };
 
+const verify = async(req, res) => {
+    const {currentUser} = req;
+    return res.send({
+        status: true,
+        code: 200,
+        data: currentUser,
+    })
+}
 const login = async(req, res) => {
     const {email, password} = req.body;
     console.log('ADMIN LOGIN: [', email ,']', req.body);
@@ -262,6 +270,7 @@ module.exports = {
     update,
     remove,
     removes,
+    verify,
     login,
     logout,
     get,
