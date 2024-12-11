@@ -44,7 +44,9 @@ const verify = async(req, res) => {
     return res.send({
         status: true,
         code: 200,
-        data: currentUser,
+        data: {
+            manager: currentUser,
+        }
     })
 }
 const login = async(req, res) => {
