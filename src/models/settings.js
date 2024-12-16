@@ -23,7 +23,7 @@ const SettingsSchema = new Schema(
   }
 );
 
-SettingsSchema.index({ title: 1 });
+SettingsSchema.index({ title: 1, unique: true  });
 
 const Settings = mongoose.model('settings', SettingsSchema);
 

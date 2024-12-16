@@ -17,6 +17,7 @@ router.get('/range/', checkAuth, checkListParam, correctQuery, catchError(roundi
 router.get('/requested-users/:_id', checkAuth, checkListParam, correctQuery, catchError(rounding.get_requested_users));
 router.get('/invited-users/:_id', checkAuth, checkListParam, catchError(rounding.get_invited_users));
 router.get('/gather-users/:_id', checkAuth, checkListParam, correctQuery, catchError(rounding.get_available_users));
+router.get('/club-roundings/', checkAuth, checkListParam, correctQuery, catchError(rounding.get_available_club_roundings));
 router.get('/list/request', checkAuth, checkListParam, catchError(rounding.request_list));
 router.get('/list/invited', checkAuth, checkListParam, catchError(rounding.invited_list));
 router.get('/:_id', checkAuth, checkListParam, catchError(rounding.get));

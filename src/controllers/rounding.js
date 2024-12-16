@@ -370,6 +370,35 @@ const get_available_users = async (req, res) => {
     })  
 };
 
+// get available roundings created by clubs
+const get_available_club_roundings = async (req, res) => {
+    const {currentUser} = req;
+    const {limit, skip} = req.params;
+    const query = {
+        type: 'club',
+        opening_date: {$gte: new Date()},
+    }
+        query.opening_date = {$gte: new Date(start_date)};
+    const _roundings = await Rounding.find(query);
+
+    const roundingIds = [];
+    _roundings.forEach(async r => {
+        const members = await RoundingMembers.find({rounding:r._id, enabled: true}).catch(err => console.log(err.message));
+        const idx = members.findIndex(m => m.user.toString() === currentUser._id.toString());
+        if(idx >= 0) roundingIds.push(r._id);
+    });
+
+    const {count, roundings} = await get_roundings_helper({_id: {$in: roundingIds}}, limit, skip);
+    return res.send({
+        status: true,
+        code: 200,
+        data: {
+            count,
+            roundings,
+        }
+    })  
+};
+
 // get users requested to this rounding 
 const get_requested_users = async (req, res) => {
     const { limit, skip } = req.query;
@@ -648,6 +677,7 @@ module.exports = {
     get_available_users,
     get_requested_users,
     get_invited_users,
+    get_available_club_roundings,
 
     request_list,
     invited_list,
