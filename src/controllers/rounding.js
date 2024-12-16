@@ -17,13 +17,14 @@ const Club = require('../models/club');
 // create a rounding
 const create = async(req, res) => {
     const {currentUser} = req;
+    
     if (currentUser.role === 2) {
         req.body.user = currentUser._id;
     }
     const rounding = new Rounding({
         ... req.body,
     });
-    
+    console.log('------', rounding);
     const result = await rounding.save().catch(err => {
         return res.status(400).send({
             status: false,
@@ -31,7 +32,7 @@ const create = async(req, res) => {
             error: err.message,
         })
     });
-
+    console.log('------1', result);
     const rounding_member = new RoundingMembers({
         user: currentUser._id,
         rounding: rounding._id,
@@ -40,6 +41,7 @@ const create = async(req, res) => {
     });
 
     await rounding_member.save();
+    console.log('------3', rounding_member);
     return res.send({ status: true, data: result });
 };
 
