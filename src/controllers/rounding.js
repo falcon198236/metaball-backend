@@ -380,7 +380,8 @@ const get_available_club_roundings = async (req, res) => {
 
     const roundingIds = [];
 
-    _roundings.forEach(async r => {
+    for(let i = 0; i < _roundings.length; i ++) {
+        const r = _roundings[i];
         const club_member = await ClubMembers.findOne({club:r.club, user: currentUser._id, enabled: true}).catch(err => console.log(err.message));
         if(club_member) {
             const members = await RoundingMembers.find({rounding:r._id, enabled: true}).catch(err => console.log(err.message));
@@ -388,7 +389,7 @@ const get_available_club_roundings = async (req, res) => {
                                                 (m.toUser?.toString() === currentUser._id.toString() && m.request_type === RequestType.INVITE));
             if(idx < 0) roundingIds.push(r._id);
         }
-    });
+    };
     const {count, roundings} = await get_roundings_helper({_id: {$in: roundingIds}}, limit, skip);
     return res.send({
         status: true,
