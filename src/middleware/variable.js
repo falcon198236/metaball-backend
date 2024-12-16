@@ -33,6 +33,7 @@ const array_variables = [
   'golf_themes',
   'golf_hits',
   'golf_experiences',
+  'locations',
 
   // blog
   'theme_ids',

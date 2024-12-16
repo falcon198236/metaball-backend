@@ -298,7 +298,7 @@ const get_available_users = async (req, res) => {
         return res.status(400).send({
             status: false,
             code: 400,
-            error: 'there is no such rounding1',
+            error: 'there is no such rounding',
         });
     }
     let club_members;
@@ -327,7 +327,7 @@ const get_available_users = async (req, res) => {
         else
             query['$or']= [{address: {$regex: `${address}.*`, $options:'i' }}];
     }
-    if (rounding_users.length > 0 && club_members.length > 0) {
+    if (rounding_users.length > 0 && club_members?.length > 0) {
         query["$and"] = [{_id: {$nin: rounding_users}},{_id: {$in: club_members}}];
     } else if (rounding_users.length > 0) {
         query._id = {$nin: rounding_users};
@@ -335,10 +335,10 @@ const get_available_users = async (req, res) => {
         query._id = {$nin: club_users};
     }
 
-    if (sex) {
+    if (sex || sex !== 'both') {
         query.sex = sex;
     }
-    
+    console.log(query.sex);
     if (location) {
         query.location = location;
     }
