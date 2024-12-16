@@ -375,16 +375,16 @@ const get_available_club_roundings = async (req, res) => {
     const {currentUser} = req;
     const {limit, skip} = req.params;
     const query = {
-        type: 'club',
+        type: RoundingMakeType.CLUB,
         opening_date: {$gte: new Date()},
     }
-        query.opening_date = {$gte: new Date(start_date)};
     const _roundings = await Rounding.find(query);
 
     const roundingIds = [];
     _roundings.forEach(async r => {
         const members = await RoundingMembers.find({rounding:r._id, enabled: true}).catch(err => console.log(err.message));
-        const idx = members.findIndex(m => m.user.toString() === currentUser._id.toString());
+        const idx = members.findIndex(m => (m.user.toString() === currentUser._id.toString() && m.request_type === RequestType.REQUEST) || 
+                                            (m.toUser.toString() === currentUser._id.toString() && m.request_type === RequestType.INVITE));
         if(idx >= 0) roundingIds.push(r._id);
     });
 
