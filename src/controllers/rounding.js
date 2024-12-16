@@ -24,7 +24,6 @@ const create = async(req, res) => {
     const rounding = new Rounding({
         ... req.body,
     });
-    console.log('------', rounding);
     const result = await rounding.save().catch(err => {
         return res.status(400).send({
             status: false,
@@ -32,7 +31,6 @@ const create = async(req, res) => {
             error: err.message,
         })
     });
-    console.log('------1', result);
     const rounding_member = new RoundingMembers({
         user: currentUser._id,
         rounding: rounding._id,
@@ -41,7 +39,6 @@ const create = async(req, res) => {
     });
 
     await rounding_member.save();
-    console.log('------3', rounding_member);
     return res.send({ status: true, data: result });
 };
 
@@ -220,7 +217,6 @@ const get_range = async (req, res) => {
             $gte: date1.toDate(),
             $lt: date2.toDate()
         };
-        console.log('@@@@@@@@@@', query);
         const count = await Rounding.countDocuments(query);
         result.push({date: date1.format('YYYY-MM-DD'), count});
         date1 = date2;
@@ -383,13 +379,15 @@ const get_available_club_roundings = async (req, res) => {
     const _roundings = await Rounding.find(query);
 
     const roundingIds = [];
+
     _roundings.forEach(async r => {
         const members = await RoundingMembers.find({rounding:r._id, enabled: true}).catch(err => console.log(err.message));
         const idx = members.findIndex(m => (m.user?.toString() === currentUser._id.toString() && m.request_type === RequestType.REQUEST) || 
                                             (m.toUser?.toString() === currentUser._id.toString() && m.request_type === RequestType.INVITE));
         if(idx >= 0) roundingIds.push(r._id);
     });
-
+    console.log('============= 1 ============', _roundings);
+    console.log('============= 2 ----------------', roundingIds);
     const {count, roundings} = await get_roundings_helper({_id: {$in: roundingIds}}, limit, skip);
     return res.send({
         status: true,
