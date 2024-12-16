@@ -61,16 +61,6 @@ const update = async(req, res) => {
     const { currentUser } = req;
     const { _id } = req.params;
     const _files = req.files?.map(f => f.path);
-    if(req.body.name) {
-        const _club = await Club.findOne({name: req.body.name});
-        if (_club?._id.toString() !== _id.toString()) {
-            return res.status(203).send({
-                status: false,
-                code: 203,
-                error: 'there is already such club',
-            });
-        }
-    }
     const club = await Club.findOne({_id}).catch(err=> console.log(err.message));
     if (currentUser.role === 2 && club.user.toString() !== currentUser._id.toString()) {
         return res.status(400).send({
