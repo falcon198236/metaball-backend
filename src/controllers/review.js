@@ -125,7 +125,10 @@ const gets = async (req, res) => {
     const count = await Review.countDocuments({$and: query});
     const reviews = await Review.find({$and: query}).populate({
         path: 'user',
-        select: UserHidenField
+        select: {
+            ...UserHidenField,
+            location: 0,
+        }
     })
         .limit(limit)
         .skip(skip)
