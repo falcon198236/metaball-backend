@@ -11,6 +11,7 @@ const User = require('../models/user');
 const { 
     change_password: change_password_helper,
     social_login: social_login_helper,
+    get_users: get_users_helper,
 } = require('../helpers/user');
 const api = require('../configs/api');
 const sgMail = require('@sendgrid/mail');
@@ -501,6 +502,35 @@ const unblock_user = async (req, res) => {
     });
 }
 
+// get the blocked users
+const block_user_list = async (req, res) => {
+    const { limit, skip} = req.query;
+    const {_id} = req.params;
+    const user = await User.findOne({_id});
+    if (!user) {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: 'there is no user',
+        });
+    }
+    const block_user_ids = user.block_user_ids || [];
+    if (block_user_ids.length === 0) {
+        return res.send({
+            status: true,
+            code: 200,
+            data: [],
+        })
+    }
+    const query = {_id: {$in: block_user_ids}};
+    const users = await get_users_helper(query, limit, skip);
+    return res.send({
+        status: true,
+        code: 200,
+        data: users,
+    })
+}
+
 // google sign up with google token
 const google_signup = async (req, res) =>{
     const {token: social_token} = req.body;
@@ -613,7 +643,7 @@ module.exports = {
     logout,
     get,
     gets,
-
+    block_user_list,
     ////////////////// client ///////////////////
     signup,
     update,
