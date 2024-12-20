@@ -129,7 +129,7 @@ const get_type_hit = async (req, res) => {
 
 // user's themes
 const get_type_user_theme = async (req, res) => {
-    const data = await Settings.find({type: SettingsType.THEME, active: true}).sort({title: 1}).catch(err=>console.log(err.message));
+    const data = await Settings.find({type: SettingsType.THEME}).catch(err=>console.log(err.message));
     return res.send({status: true, data});
 };
 

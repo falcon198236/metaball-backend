@@ -72,7 +72,6 @@ const gets = async (req, res) => {
     if (code) {
         query.code = code;
     }
-    console.log(query);
     const count = await Systemlog.countDocuments(query);
     const syslogs = await Systemlog.find(query).populate({
         path: 'user',
