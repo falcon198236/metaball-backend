@@ -14,6 +14,8 @@ const RoundingSchema = new Schema(
     address: { type: mongoose.Schema.Types.ObjectId, ref: 'golfcourse'}, 
     type: String, //user and club, if rounding is created by user, type is 'person' and otherwise, type is 'club'
     sex: { type: String, default: 'both'}, // both, man, woman,
+    golf_course_name: { type: String, default: ''}, 
+    golf_course_address: { type: String, default: ''}, 
     golf_themes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'settings'}],
     golf_hits: [{ type: mongoose.Schema.Types.ObjectId, ref: 'settings'}],
     golf_experiences: [{ type: mongoose.Schema.Types.ObjectId, ref: 'settings'}],
