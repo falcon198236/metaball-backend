@@ -178,7 +178,7 @@ const get_dm_unread_message = async(req, res) => {
     const {_id: user_id} = req. params;
     const query = {
         club: {$exists: false},
-        status: false,
+        // status: false,
         $or: [{
                 $and: [
                     {from_user: currentUser._id},
@@ -213,7 +213,7 @@ const get_club_unread_message = async(req, res) => {
         status: false,
     };
 
-    const {count, messages} = await get_club_message_helper(query, limit, skip);
+    const {count, messages} = await get_club_message_helper(query, currentUser._id, limit, skip);
     return res.send({
         status: true,
         code: 200,
@@ -413,6 +413,17 @@ const remove = async( req, res) => {
     });
 }
 
+// check if there are any unread messages.
+const has_unread_message = async(req, res) => {
+    const {currentUser} = req;
+    const result = await Message.countDocuments({to_user: currentUser._id, status: false});
+    return res.send({
+        status: true,
+        code: 200,
+        data: result,
+    })
+}
+
 module.exports = {
     // addmin
     get_dm_message_for_user,
@@ -426,6 +437,6 @@ module.exports = {
     get_dm_unread_message,
     get_club_message,
     get_club_unread_message,
-
+    has_unread_message,
     remove,
 }

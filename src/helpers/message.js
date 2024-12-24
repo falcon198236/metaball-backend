@@ -24,18 +24,18 @@ const get_dm_message = async(query, user, limit=10, skip = 0) => {
         .limit(limit)
         .skip(skip);
     const msg_ids = [];
-    messages.forEach(e => {
-        if(!e.status && e.to_user.toString() === user.toString()) {
+    for(let i = 0; i < messages.length; i ++){
+        const e = messages[i];
+        if(!e.status && e.to_user?._id.toString() === user.toString()) {
             e.status = true;
             msg_ids.push(e._id);
         }
-    });
-    
+    };
     await Message.updateMany({_id: {$in: msg_ids}}, {$set: {status: true}});
     return {count, messages};
 }
 // get messages on this club
-const get_club_message = async(query, limit=10, skip = 0) => {
+const get_club_message = async(query, user, limit=10, skip = 0) => {
     const count = await Message.countDocuments(query)
     const messages = await Message.find(query)
         .populate({
@@ -65,6 +65,15 @@ const get_club_message = async(query, limit=10, skip = 0) => {
         .sort({created_at: -1})
         .limit(limit)
         .skip(skip);
+    const msg_ids = [];
+    for(let i = 0; i < messages.length; i ++){
+        const e = messages[i];
+        if(!e.status && e.to_user?._id.toString() === user.toString()) {
+            e.status = true;
+            msg_ids.push(e._id);
+        }
+    };
+    await Message.updateMany({_id: {$in: msg_ids}}, {$set: {status: true}});
     return {count, messages};
 }
 

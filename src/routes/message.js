@@ -15,5 +15,6 @@ router.get('/club/:_id', checkListParam, catchError(message.get_club_message));
 router.get('/club-unread/:_id', checkListParam, catchError(message.get_club_unread_message));
 router.post('/dm/:_id', upload.array('files', 1), catchError(message.send_dm));
 router.post('/club/:_id', upload.array('files', 1), catchError(message.send_club));
+router.get('/has-unread', upload.array('files', 1), catchError(message.has_unread_message));
 
 module.exports = router;
