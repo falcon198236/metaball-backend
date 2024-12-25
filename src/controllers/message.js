@@ -383,6 +383,8 @@ const get_users = async(req, res) => {
             const _user = await User.findOne({_id: user.id}, {_id: 1, email: 1, logo: 1, fullname: 1});
             if(_user) {
                 user.info = _user;
+                user.from_user = message._id.from_user;
+                user.to_user = message._id.to_user;
                 user.message = message.msg;
                 user.last_date = message.date;
                 user.status = message.status;
