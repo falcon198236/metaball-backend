@@ -88,10 +88,17 @@ const get_club_members = async(_id) => {
     const _club_members = await ClubMembers.find({club: _id, enabled: true});
     return _club_members.map(e=>e.user);
 }
+
+const get_in_club_ids = async(user) => {
+    const club_members = await ClubMembers.find({user, enabled: true}).catch(err => console.log(err.message));
+    console.log(club_members);
+    return club_members.map(e => e.club);
+}
 module.exports = {
     remove_fields,
     get_clubs,
     request,
     invite,
     get_club_members,
+    get_in_club_ids,
 }

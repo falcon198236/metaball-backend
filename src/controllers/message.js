@@ -7,7 +7,7 @@ const {
     get_dm_message: get_dm_message_helper, 
     get_club_message:get_club_message_helper 
 } = require('../helpers/message');
-const {get_club_members: get_club_members_helper} = require('../helpers/club');
+const {get_club_members: get_club_members_helper, get_in_club_ids} = require('../helpers/club');
 const { MessageType, RequestType, MessageResponseStatus } = require('../constants/type');
 const Rounding = require('../models/rounding');
 const SECTION = 'message';
@@ -178,7 +178,7 @@ const get_dm_unread_message = async(req, res) => {
     const {_id: user_id} = req. params;
     const query = {
         club: {$exists: false},
-        // status: false,
+        status: false,
         $or: [{
                 $and: [
                     {from_user: currentUser._id},
@@ -283,12 +283,13 @@ const get_club_message = async(req, res) => {
 // get available clubs
 const get_clubs = async(req, res) => {
     const { currentUser } = req;
-    const { limit, skip } = req.query;
+    const club_ids = await get_in_club_ids(currentUser._id);
     const query = {
         club: {$exists: true},
         $or: [
                 {from_user: currentUser._id}, 
-                {to_user: currentUser._id}
+                {to_user: currentUser._id},
+                {club: {$in: club_ids}}
             ]
     };
     const messages = await Message.aggregate([
@@ -312,8 +313,7 @@ const get_clubs = async(req, res) => {
         },
     ]);
     const clubs = [];
-    for (let i = skip; i < skip + limit; i ++) {
-        if(i >= messages.length) continue;
+    for (let i = 0; i < messages.length; i ++) {
         const message = messages[i];
         const club = {};
         const _club = await Club.findOne({_id: message._id.club}, {_id: 1, name: 1, logo: 1});
@@ -357,6 +357,7 @@ const get_users = async(req, res) => {
                 },
                 msg: {$first: "$msg"},
                 date: {$first: "$created_at"},
+                status: {$first: "$status"},
             }
         },
         {
@@ -384,6 +385,7 @@ const get_users = async(req, res) => {
                 user.info = _user;
                 user.message = message.msg;
                 user.last_date = message.date;
+                user.status = message.status;
                 delete user.id;
                 users.push(user);
             }
