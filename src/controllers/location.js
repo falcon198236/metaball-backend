@@ -54,9 +54,11 @@ const update = async(req, res) => {
 };
 
 const gets = async (req, res) => {
-    const { limit, skip } = req.query;
-    const count = await Location.countDocuments();
-    const locations = await Location.find().limit(limit).skip(skip);
+    const { key, limit, skip } = req.query;
+    const query = {};
+    if (key) query.name = {$regex: `${key}.*`, $options:'i' }; 
+    const count = await Location.countDocuments(query);
+    const locations = await Location.find(query).limit(limit).skip(skip);
 
     return res.send({ status: true, code: 200, data: {count, locations} });
 };
@@ -89,7 +91,6 @@ const remove = async (req, res) => {
 
 const removes = async (req, res) => {
     const { ids } = req.body;
-    console.log('#########################', req.body);
     const locations = await Location.find({_id: {$in: ids}}).catch(err => console.log(err.message));
     locations.forEach(b => {
         if (b['file']) {

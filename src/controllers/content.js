@@ -148,7 +148,6 @@ const gets = async (req, res) => {
     if (active !== undefined) {
         query.active = active;
     }
-    
     const count = await Content.countDocuments(query);
     const content = await Content.find(query)
         .limit(limit)
