@@ -387,7 +387,7 @@ const get_available_club_roundings = async (req, res) => {
             const members = await RoundingMembers.find({rounding:r._id, enabled: true}).catch(err => console.log(err.message));
             const idx = members.findIndex(m => (m.user?.toString() === currentUser._id.toString() && (m.request_type === RequestType.REQUEST || m.request_type === RequestType.OWN)) || 
                                                 (m.toUser?.toString() === currentUser._id.toString() && m.request_type === RequestType.INVITE));
-            if(idx < 0) roundingIds.push(r._id);
+            if(idx < 0|| r.user.toString() === currentUser._id.toString()) roundingIds.push(r._id);
         }
     };
     const {count, roundings} = await get_roundings_helper({_id: {$in: roundingIds}}, limit, skip);
