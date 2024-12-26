@@ -95,7 +95,7 @@ const gets = async (req, res) => {
     const { key, limit, skip } = req.query;
     const query = {};
     if (key)
-        query.push({name: {$regex: `${key}.*`, $options:'i' }});
+        query.name = {$regex: `${key}.*`, $options:'i' };
     const count = await Club.countDocuments(query);
     const clubs = await Club.find(query, {member_ids: 0, request_member_ids: 0, event_ids: 0, __v: 0})
         .populate({
