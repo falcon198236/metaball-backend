@@ -17,4 +17,7 @@ router.post('/dm/:_id', upload.array('files', 1), catchError(message.send_dm));
 router.post('/club/:_id', upload.array('files', 1), catchError(message.send_club));
 router.get('/has-unread', upload.array('files', 1), catchError(message.has_unread_message));
 
+router.delete('/dm/:_id', catchError(message.remove_dm));
+router.delete('/club/:_id', catchError(message.remove_club));
+
 module.exports = router;

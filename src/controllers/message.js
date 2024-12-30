@@ -230,16 +230,14 @@ const get_dm_message = async(req, res) => {
     const {_id: user_id} = req. params;
     const query = {
         club: {$exists: false},
+        deleted_users: {$ne: currentUser._id},
         $or: [{
-                $and: [
-                    {from_user: currentUser._id},
-                    {to_user: user_id},
-                ]
+                from_user: currentUser._id,
+                to_user: user_id,
+                
             },{
-                $and: [
-                    {to_user: currentUser._id},
-                    {from_user: user_id},
-                ]
+                to_user: currentUser._id,
+                from_user: user_id,
             }
         ]
     };
@@ -261,6 +259,7 @@ const get_club_message = async(req, res) => {
     const {_id: club_id} = req. params;
     const query = {
         club: club_id,
+        deleted_users: {$ne: currentUser._id},
     };
     const members = await get_club_members_helper(club_id);
     
@@ -286,6 +285,7 @@ const get_clubs = async(req, res) => {
     const club_ids = await get_in_club_ids(currentUser._id);
     const query = {
         club: {$exists: true},
+        deleted_users: {$ne: currentUser._id},
         $or: [
                 {from_user: currentUser._id}, 
                 {to_user: currentUser._id},
@@ -337,6 +337,7 @@ const get_users = async(req, res) => {
     const { limit, skip } = req.query;
     const query = {
         club: {$exists: false},
+        deleted_users: {$ne: currentUser._id},
         $or: [
             {from_user: currentUser._id},
             {to_user: currentUser._id},
@@ -428,6 +429,67 @@ const has_unread_message = async(req, res) => {
     })
 }
 
+// remove dm message
+const remove_dm = async (req, res) => {
+    const {_id: userId} = req.params;
+    const { currentUser } = req;
+    const query = {
+        club: {$exists: false},
+        deleted_users: {$ne: currentUser._id},
+        $or: [
+            {
+                from_user: currentUser._id,
+                to_user: userId,
+            },
+            {
+                to_user: currentUser._id,
+                from_user: userId,
+            }
+            
+        ]
+    };
+    const result = await Message.updateMany(query, {$push: {deleted_users: currentUser._id}}).catch(err => {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: err.message
+        })
+    });
+    
+    return res.send({
+        status: true,
+        code: 200,
+        data: result,
+    });
+}
+
+const remove_club = async (req, res) => {
+    const {_id: clubId} = req.params;
+    const { currentUser } = req;
+    const query = {
+        club: clubId,
+        deleted_users: {$ne: currentUser._id},
+        $or: [
+            { from_user: currentUser._id },
+            { to_user: currentUser._id }
+            
+        ]
+    };
+    const result = await Message.updateMany(query, {$push: {deleted_users: currentUser._id}}).catch(err => {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: err.message
+        })
+    });
+    
+    return res.send({
+        status: true,
+        code: 200,
+        data: result,
+    });
+}
+
 module.exports = {
     // addmin
     get_dm_message_for_user,
@@ -443,4 +505,6 @@ module.exports = {
     get_club_unread_message,
     has_unread_message,
     remove,
+    remove_dm,
+    remove_club,
 }

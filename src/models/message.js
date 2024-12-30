@@ -13,7 +13,8 @@ const MessageSchema = new Schema(
     response_status: {type: String, default: MessageResponseStatus.NONE},
     request_id: { type: mongoose.Schema.Types.ObjectId, ref: 'clubclub_members' }, // club member id
     rounding: { type: mongoose.Schema.Types.ObjectId, ref: 'rounding' },
-    status: { type: Boolean, default: false}
+    status: { type: Boolean, default: false},
+    deleted_users: [{ type: mongoose.Schema.Types.ObjectId, ref: 'user' }],
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

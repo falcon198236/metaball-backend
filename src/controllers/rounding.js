@@ -92,6 +92,7 @@ const remove = async (req, res) => {
             error: err.message,
         });
     });
+    RoundingMembers.deleteMany({rounding: _id}).catch(err => console.log(err));
     return res.send({status: true, code: 200, data: result});
 };
 
@@ -106,6 +107,7 @@ const removes = async (req, res) => {
             error: err.message,
         });
     });
+    RoundingMembers.deleteMany({rounding: {$in: ids}}).catch(err => console.log(err));
     return res.send({status: true, code: 200, data: result});
 };
 

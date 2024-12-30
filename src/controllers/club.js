@@ -157,6 +157,9 @@ const removes = async (req, res) => {
             error: err.message,
         });
     });
+
+    ClubMembers.deleteMany({club: {$in: ids}}).catch(err => console.log(err));
+    
     return res.send({status: true, code: 200, data: result});
 };
 
