@@ -19,6 +19,10 @@ const {
     email_send_code,
     forgot_pwd,
     reset_password,
+    google_signup,
+    google_login,
+    x_signup,
+    x_login
 } = require('../controllers/user');
 const {catchError} = require('./error');
 const router = express.Router();
@@ -43,6 +47,10 @@ router.post('/token', checkAuth, catchError(verifyToken));
 router.post('/verify', catchError(email_send_code));
 router.post('/forgot-pwd', catchError(forgot_pwd));
 router.post('/reset-pwd', catchError(reset_password));
+router.post('/google-signup', catchError(google_signup));
+router.post('/google-login', catchError(google_login));
+router.post('/x-signup', catchError(x_signup));
+router.post('/x-login', catchError(x_login));
 
 
 

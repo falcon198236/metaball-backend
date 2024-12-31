@@ -1,8 +1,10 @@
+const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/user');
 const Settings = require('../models/settings');
 const Blog = require('../models/blog');
 const Club = require('../models/club');
+const api = require('../configs/api');
 const { UserHidenField } = require('../constants/security');
 
 const create = async(data) => {
@@ -103,7 +105,6 @@ const social_login = async(email) => {
         nickname: user.nickname,
         email: user.email,
     };
-    
     const token = jwt.sign(payload, api.SECURITY_KEY);
     user.last_login_at = new Date();
     const _user = { ...user._doc, last_login_at: new Date, is_social_login: true};

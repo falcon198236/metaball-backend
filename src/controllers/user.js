@@ -561,7 +561,7 @@ const google_signup = async (req, res) =>{
         });
     }
     
-    const {status, token, user} = social_login_helper(email); 
+    const {status, token, user} = await social_login_helper(email); 
     if (!status) {
         return res.status(400).send({
             status: false,
@@ -599,7 +599,7 @@ const google_login = async (req, res) =>{
     //     });
     // }
     
-    const {status, token, user} = social_login_helper(email); 
+    const {status, token, user} = await social_login_helper(email); 
     if (!status) {
         return res.status(400).send({
             status: false,
