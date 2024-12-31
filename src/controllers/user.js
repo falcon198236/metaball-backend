@@ -211,7 +211,7 @@ const login = async(req, res) => {
     // });
     const token = jwt.sign(payload, api.SECURITY_KEY);
     user.last_login_at = new Date();
-    const _user = { ...user._doc, last_login_at: new Date};
+    const _user = { ...user._doc, last_login_at: new Date, is_social_login: false};
     await User.replaceOne({_id: user._id}, _user, { upsert: true }).catch(err => console.log(err));
     
     return res.send({
