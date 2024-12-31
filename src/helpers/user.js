@@ -96,7 +96,9 @@ const change_password = async (user_id, password) => {
 }
 
 const social_login = async(email) => {
-    const user = await User.findOne({email});
+    const user = await User.findOne({email})
+        .populate('themes')
+        .populate('location');
     if (!user) {
         return {status: false, code: 400};
     }
