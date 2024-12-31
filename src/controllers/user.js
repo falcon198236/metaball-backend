@@ -533,16 +533,17 @@ const block_user_list = async (req, res) => {
 
 // google sign up with google token
 const google_signup = async (req, res) =>{
-    const {token: social_token} = req.body;
-    let email;
+    // const {token: social_token} = req.body;
+    const {email, name} = req.body;
     try {
-        const ticket = await googleClient.verifyIdToken({
-          idToken: social_token,
-          audience: app.GOOGLE_CLIENT_ID,
-        });
-        const _payload = ticket.getPayload();
-        email = _payload["email"];
-        const name = _payload["name"];
+        // let email;
+        // const ticket = await googleClient.verifyIdToken({
+        //   idToken: social_token,
+        //   audience: app.GOOGLE_CLIENT_ID,
+        // });
+        // const _payload = ticket.getPayload();
+        // email = _payload["email"];
+        // const name = _payload["name"];
 
         const {status: status_create, data: code, error} = await createUser({
             email,
@@ -580,22 +581,23 @@ const google_signup = async (req, res) =>{
 }
 // google login with google token
 const google_login = async (req, res) =>{
-    const {token: social_token} = req.body;
-    let email;
-    try {
-        const ticket = await googleClient.verifyIdToken({
-          idToken: social_token,
-          audience: app.GOOGLE_CLIENT_ID,
-        });
-        const _payload = ticket.getPayload();
-        email = _payload["email"];
-    } catch (err) {
-        return res.status(400).send({
-            status: false,
-            code: 400,
-            error: err.message,
-        });
-    }
+    // const {token: social_token} = req.body;
+    const {email} = req.body;
+    // try {
+    //     let email;
+    //     const ticket = await googleClient.verifyIdToken({
+    //       idToken: social_token,
+    //       audience: app.GOOGLE_CLIENT_ID,
+    //     });
+    //     const _payload = ticket.getPayload();
+    //     email = _payload["email"];
+    // } catch (err) {
+    //     return res.status(400).send({
+    //         status: false,
+    //         code: 400,
+    //         error: err.message,
+    //     });
+    // }
     
     const {status, token, user} = social_login_helper(email); 
     if (!status) {
