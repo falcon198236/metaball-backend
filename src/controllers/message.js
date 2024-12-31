@@ -469,11 +469,11 @@ const remove_club = async (req, res) => {
     const query = {
         club: clubId,
         deleted_users: {$ne: currentUser._id},
-        $or: [
-            { from_user: currentUser._id },
-            { to_user: currentUser._id }
+        // $or: [
+        //     { from_user: currentUser._id },
+        //     { to_user: currentUser._id }
             
-        ]
+        // ]
     };
     const result = await Message.updateMany(query, {$push: {deleted_users: currentUser._id}}).catch(err => {
         return res.status(400).send({
