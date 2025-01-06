@@ -14,6 +14,7 @@ const ContentSchema = new Schema(
       default: 'news', // event, advertision,  news
     },
     active: { type: Boolean, default: true},
+    rounding: { type: mongoose.Schema.Types.ObjectId, ref: 'rounding' },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

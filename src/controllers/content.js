@@ -118,7 +118,18 @@ const removes = async (req, res) => {
 
 const get = async (req, res) => {
     const { _id } = req.params;
-    const content = await Content.findOne({_id}).catch(err => console.log(err.message));
+    
+    const content = await Content.findOne({_id})
+        .populate({
+            path: 'rounding',
+            select: {
+                _id: 1,
+                title: 1,
+                introduction: 1,
+                place: 1,
+            }
+        })
+        .catch(err => console.log(err.message));
     if (!content) {
         return res.status(201).send({
             status: false,
@@ -150,6 +161,7 @@ const gets = async (req, res) => {
     }
     const count = await Content.countDocuments(query);
     const content = await Content.find(query)
+        .populate('rounding')
         .limit(limit)
         .skip(skip);
 
@@ -165,6 +177,7 @@ const get_events = async (req, res) => {
     
     const count = await Content.countDocuments(query);
     const contents = await Content.find(query)
+        .populate('rounding')
         .limit(limit)
         .skip(skip)
     return res.send({ status: true, code: 200, data: {count, contents} });

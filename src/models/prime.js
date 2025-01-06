@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 
-const ServiceSchema = new Schema(
+const PrimeSchema = new Schema(
   {
     title: { type: String, default: ''},
     icon: { type: String, default: ''},
@@ -16,6 +16,6 @@ const ServiceSchema = new Schema(
   }
 );
 
-const Service = mongoose.model('service', ServiceSchema);
+const Prime = mongoose.model('prime', PrimeSchema);
 
-module.exports = Service;
+module.exports = Prime;

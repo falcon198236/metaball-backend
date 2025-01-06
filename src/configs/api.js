@@ -6,5 +6,10 @@ const api = {
     SYSLOG_ENABLE: process.env.SYSLOG_ENABLE || 1,
     GOOGLE_API_CLIENT_ID: process.env.GOOGLE_API_CLIENT_ID,
     X_API_CLIENT_ID: process.env.X_API_CLIENT_ID,
+    MAILGUN_DOMAIN:process.env.MAILGUN_DOMAIN,
+    MAILGUN_APIKEY:process.env.MAILGUN_APIKEY,
+    MAILERSEND_KEY:process.env.MAILERSEND_KEY
+
 }
+
 module.exports = api;

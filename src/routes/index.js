@@ -9,6 +9,7 @@ const follow = require('./follow');
 const rounding = require('./rounding');
 const review = require('./review');
 const service = require('./service');
+const prime = require('./prime');
 const golfcourse = require('./golfcourse');
 const message = require('./message');
 const { checkAuth, verifyToken } = require('../middleware/auth')
@@ -37,6 +38,7 @@ router.use('/follow', checkAuth, follow);
 router.use('/rounding', rounding);
 router.use('/review', checkAuth, review);
 router.use('/service', service);
+router.use('/prime', prime);
 router.use('/golfcourse', golfcourse);
 router.use('/message', checkAuth, message);
 
