@@ -12,7 +12,6 @@ const {
 } = require('../helpers/rounding');
 const { get_users:get_users_helper } = require('../helpers/user');
 const { query } = require('express');
-const Club = require('../models/club');
 
 // create a rounding
 const create = async(req, res) => {
