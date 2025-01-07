@@ -85,7 +85,6 @@ const removes = async (req, res) => {
     const { ids } = req.body;
     const primes = await Prime.find({_id: {$in: ids}}).catch(err => console.log(err.message));
     primes.forEach(b => {
-        console.log(b);
         if (b['icon']) {
             const f = b['icon'];
             if(fs.existsSync(f)) {
