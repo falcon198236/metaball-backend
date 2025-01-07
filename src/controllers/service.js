@@ -87,11 +87,10 @@ const removes = async (req, res) => {
     const services = await Service.find({_id: {$in: ids}}).catch(err => console.log(err.message));
     services.forEach(b => {
         if (b['icon']) {
-            b['icon']?.forEach(f => {
-                if(fs.existsSync(f)) {
-                    fs.unlinkSync(f);    
-                }
-            });
+            const f = b['icon'];
+            if(fs.existsSync(f)) {
+                fs.unlinkSync(f);    
+            }
         }   
     })
     const result = await Service.deleteMany({_id: {$in: ids}}).catch(err => {
