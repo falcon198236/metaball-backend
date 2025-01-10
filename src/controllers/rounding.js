@@ -581,7 +581,10 @@ const request_list = async(req, res) => {
         })
         .catch(err => console.log(err.message));
     const roundings_ids = _roundings_members.map((e)=>e.rounding);
-    const query = {_id: {$in: roundings_ids}};
+    const query = {
+        _id: {$in: roundings_ids},
+        opening_date: {$gte: new Date(start_date)},
+    };
     const {count, roundings} = await get_roundings_helper(query, limit, skip);
     return res.send({
         status: true,
@@ -604,7 +607,10 @@ const invited_list = async(req, res) => {
         .catch(err => console.log(err.message));
 
     const roundings_ids = _roundings_members.map((e)=>e.rounding);
-    const query = {_id: {$in: roundings_ids}};
+    const query = {
+        _id: {$in: roundings_ids},
+        opening_date: {$gte: new Date(start_date)},
+    };
     const {count, roundings} = await get_roundings_helper(query, limit, skip);
     return res.send({
         status: true,
