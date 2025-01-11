@@ -5,11 +5,10 @@ const api = {
     SUPER_ADMIN_PASSWORD: process.env.SUPER_ADMIN_PASSWORD || 'betalball',
     SYSLOG_ENABLE: process.env.SYSLOG_ENABLE || 1,
     GOOGLE_API_CLIENT_ID: process.env.GOOGLE_API_CLIENT_ID,
-    X_API_CLIENT_ID: process.env.X_API_CLIENT_ID,
-    MAILGUN_DOMAIN:process.env.MAILGUN_DOMAIN,
-    MAILGUN_APIKEY:process.env.MAILGUN_APIKEY,
-    MAILERSEND_KEY:process.env.MAILERSEND_KEY
-
+    SMTP_USER: process.env.SMTP_USER,
+    SMTP_PWD: process.env.SMTP_PWD,
+    SMTP_PORT: process.env.SMTP_PORT,
+    SMTP_HOST: process.env.SMTP_HOST
 }
 
 module.exports = api;

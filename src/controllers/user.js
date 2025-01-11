@@ -4,8 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const ejs = require('ejs');
 const jwt = require('jsonwebtoken');
-const { OAuth2Client } = require("google-auth-library");
-
+const nodemailer = require('nodemailer');
 const User = require('../models/user');
 
 const { 
@@ -14,12 +13,7 @@ const {
     get_users: get_users_helper,
 } = require('../helpers/user');
 const api = require('../configs/api');
-const sgMail = require('@sendgrid/mail');
-const googleClient = new OAuth2Client(api.GOOGLE_API_CLIENT_ID);
-const xClient = new OAuth2Client(api.X_API_CLIENT_ID);
 
-// Set API key
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const {
     create: createUser,
@@ -28,6 +22,17 @@ const {
 const { UserHidenField } = require('../constants/security');
 const { error } = require('console');
 const app = require('../app');
+
+const smtp = nodemailer.createTransport({
+    port: api.SMTP_PORT,
+    host: api.SMTP_HOST,
+    secure: false,
+    auth: {
+        user: api.SMTP_USER,
+        pass: api.SMTP_PWD,
+    },
+    debug: true,
+});
 
 const SECTION = 'user';
 const signup = async(req, res) => {
@@ -305,25 +310,28 @@ const email_send_code = async (req, res) => {
 
     const htmlContent = ejs.render(template, { email, code });
 
-    const msg = {
-        to: email,       // Change to your recipient
-        from: 'support@metaball.com',        // Change to your verified sender
+   
+    var mail = {
+        from: api.SMTP_USER,
+        to: email,
         subject: 'Metalball account team',
         html: htmlContent,
-      };
-    const result = sgMail.send(msg).catch((error) => {
-        return res.status(400).send({
-            status: false,
-            code: 400,
-            error: error.message
-        });
-    });
+    };
+    
+    smtp.sendMail(mail, (error, info) => {
+        if (error) {
+            console.log(error);
+        }
+        else {
+            console.log('sent email');
+        }
+    })
     return res.send({
         status: true,
         code: 200,
         verification_code: code,
         //data: result
-    })
+    });
 }
 
 const check_forgot_code = async (req, res) => {
@@ -386,20 +394,22 @@ const forgot_pwd = async(req, res) => {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
 
     const htmlContent = ejs.render(template, { email, code });
-
-    const msg = {
-        to: email,       // Change to your recipient
-        from: 'support@metaball.com',        // Change to your verified sender
+    var mail = {
+        from: api.SMTP_USER,
+        to: email,
         subject: 'Metalball account team',
         html: htmlContent,
-      };
-    const result = sgMail.send(msg).catch((error) => {
-        return res.status(400).send({
-            status: false,
-            code: 400,
-            error: error.message
-        });
-    });
+    };
+    
+    smtp.sendMail(mail, (error, info) => {
+        if (error) {
+            console.log(error);
+        }
+        else {
+            console.log('sent email');
+        }
+    })
+    
     return res.send({
         status: true,
         code: 200,
@@ -536,15 +546,7 @@ const google_signup = async (req, res) =>{
     // const {token: social_token} = req.body;
     const {email, name} = req.body;
     try {
-        // let email;
-        // const ticket = await googleClient.verifyIdToken({
-        //   idToken: social_token,
-        //   audience: app.GOOGLE_CLIENT_ID,
-        // });
-        // const _payload = ticket.getPayload();
-        // email = _payload["email"];
-        // const name = _payload["name"];
-
+        
         const {status: status_create, data: code, error} = await createUser({
             email,
             fullname: name,
@@ -581,23 +583,7 @@ const google_signup = async (req, res) =>{
 }
 // google login with google token
 const google_login = async (req, res) =>{
-    // const {token: social_token} = req.body;
     const {email} = req.body;
-    // try {
-    //     let email;
-    //     const ticket = await googleClient.verifyIdToken({
-    //       idToken: social_token,
-    //       audience: app.GOOGLE_CLIENT_ID,
-    //     });
-    //     const _payload = ticket.getPayload();
-    //     email = _payload["email"];
-    // } catch (err) {
-    //     return res.status(400).send({
-    //         status: false,
-    //         code: 400,
-    //         error: err.message,
-    //     });
-    // }
     
     const {status, token, user} = await social_login_helper(email); 
     if (!status) {
