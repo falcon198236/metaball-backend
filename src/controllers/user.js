@@ -26,7 +26,7 @@ const app = require('../app');
 const smtp = nodemailer.createTransport({
     port: api.SMTP_PORT,
     host: api.SMTP_HOST,
-    secure: false,
+    secure: true,
     auth: {
         user: api.SMTP_USER,
         pass: api.SMTP_PWD,
