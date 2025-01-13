@@ -123,7 +123,7 @@ const activate = async(req, res) => {
 
 // it should be used on client side
 const get_type_hit = async (req, res) => {
-    const data = await Settings.find({type: SettingsType.HIT, active: true}).sort({title: 1}).catch(err=>console.log(err.message));
+    const data = await Settings.find({type: SettingsType.HIT, active: true}).catch(err=>console.log(err.message));
     return res.send({status: true, data});
 };
 
