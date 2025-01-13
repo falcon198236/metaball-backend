@@ -255,7 +255,7 @@ const get_available_users = async (req, res) => {
     const members = await ClubMembers.find({club:_id}).catch(err => console.log(err.message));
     const club_users = members.map(e => e.user);
     
-    const query = {};
+    const query = {role: 2};
     if (club_users.length > 0) {
         query._id = {$nin: club_users};
     }

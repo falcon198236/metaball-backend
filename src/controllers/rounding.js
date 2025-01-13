@@ -317,7 +317,7 @@ const get_available_users = async (req, res) => {
         else 
             return e.user;
     });
-    const query = {};
+    const query = {role: 2};
     if (name) {
         query['$or'] = [{email: {$regex: `${name}.*`, $options:'i' }},
             {fullname: {$regex: `${name}.*`, $options:'i' }},
