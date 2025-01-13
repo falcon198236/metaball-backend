@@ -8,15 +8,15 @@ const SECTION = 'review';
 // create a review with blog's id and content
 const create = async(req, res) => {
     const {currentUser} = req;
-    const { blog: blog_id, content } = req.body;
-    const _review = await Review.findOne({user: currentUser._id, blog: blog_id}).catch(err=> console.log(err.message));
-    if (_review) {
-        return res.status(201).send({
-            status: false,
-            error: 'you alread reviewd',
-        });
-    }
-    const blog = new mongoose.Types.ObjectId(blog_id);
+    const { blog, content } = req.body;
+    // const _review = await Review.findOne({user: currentUser._id, blog: blog_id}).catch(err=> console.log(err.message));
+    // if (_review) {
+    //     return res.status(201).send({
+    //         status: false,
+    //         error: 'you already reviewd',
+    //     });
+    // }
+    // const blog = new mongoose.Types.ObjectId(blog_id);
     const review = new Review({
         user: currentUser._id,
         blog,
