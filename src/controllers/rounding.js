@@ -337,10 +337,9 @@ const get_available_users = async (req, res) => {
         query._id = {$nin: club_users};
     }
 
-    if (sex || sex !== 'both') {
+    if (sex && sex !== 'both') {
         query.sex = sex;
     }
-    console.log(query.sex);
     if (location) {
         query.location = location;
     }

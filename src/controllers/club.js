@@ -283,7 +283,7 @@ const get_available_users = async (req, res) => {
         else
             query['$or']= [{address: {$regex: `${address}.*`, $options:'i' }}];
     }
-    if (sex) {
+    if (sex && sex !== 'both') {
         query.sex = sex;
     }
     
