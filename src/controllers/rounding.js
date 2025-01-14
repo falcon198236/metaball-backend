@@ -305,7 +305,7 @@ const get_available_users = async (req, res) => {
     }
     let club_members;
     if(rounding.type === RoundingMakeType.CLUB) {
-        const _club_members = await ClubMembers.find({_id: rounding.club, enabled: true});
+        const _club_members = await ClubMembers.find({club: rounding.club, enabled: true});
         if (_club_members) {
             club_members = _club_members.map((e) => e.user);
         }
@@ -343,6 +343,7 @@ const get_available_users = async (req, res) => {
     if (location) {
         query.location = location;
     }
+    console.log(query);
 
     if (start_age) {
         let age1 = moment().subtract(start_age, 'year');
