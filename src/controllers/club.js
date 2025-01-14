@@ -701,6 +701,43 @@ const remove_member = async(req, res) => {
     });
 };
 
+const change_owner = async(req, res) => {
+    const {currentUser} = req;
+    const {_id} = req.params;
+    const {new_owner} = req.body;
+    const club = await Club.findOne({_id, deleted: false}).catch(err => {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: 'there is no such club',
+        })
+    });
+    const result = await Club.updateOne({_id}, {$set: {_id: new_owner}});
+    return res.send({
+        status: true,
+        code: 200,
+        data: result
+    });
+}
+
+const update_managers = async(req, res) => {
+    const {currentUser} = req;
+    const {_id} = req.params;
+    const {manager_ids} = req.body;
+    const club = await Club.findOne({_id, deleted: false}).catch(err => {
+        return res.status(400).send({
+            status: false,
+            code: 400,
+            error: 'there is no such club',
+        })
+    });
+    const result = await Club.updateOne({_id}, {$set: {manager_ids}});
+    return res.send({
+        status: true,
+        code: 200,
+        data: result
+    })
+}
 
 module.exports = {
     create,
@@ -730,4 +767,6 @@ module.exports = {
     reject_request,
     add_member,
     remove_member,
+    update_managers,
+    change_owner,
 }

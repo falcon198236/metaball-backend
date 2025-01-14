@@ -36,6 +36,8 @@ router.post('/invite', catchError(club.invite_user));
 router.post('/invites', catchError(club.invite_users));
 router.post('/allow-request', catchError(club.allow_request));
 router.delete('/reject-request/:_id', catchError(club.reject_request));
+router.post('/change-owner/:_id', catchError(club.change_owner));
+router.post('/update-mangers/:_id', catchError(club.update_managers));
 router.delete('/user/:_id', catchError(club.remove_user));
 
 module.exports = router;
