@@ -104,20 +104,20 @@ const gets = async (req, res) => {
 const remove = async (req, res) => {
     const { currentUser } = req;
     const { _id } = req.params;
-    const user = await User.findOne({_id}).catch(err => console.log(err.message));
-    if (!user) {
-        return res.status(400).send({
-            status: false,
-            error: 'there is no user',
-        });
-    }
+    // const user = await User.findOne({_id}).catch(err => console.log(err.message));
+    // if (!user) {
+    //     return res.status(400).send({
+    //         status: false,
+    //         error: 'there is no user',
+    //     });
+    // }
 
-    if (user['logo']) {
-        if(fs.existsSync(user['logo'])) {
-            fs.unlinkSync(user['logo']);    
-        }
-    }
-    const result = await User.deleteOne({_id}).catch(err => {
+    // if (user['logo']) {
+    //     if(fs.existsSync(user['logo'])) {
+    //         fs.unlinkSync(user['logo']);    
+    //     }
+    // }
+    const result = await User.updateOne({_id}, {$set: {deleted: true}}).catch(err => {
         return res.status(201).send({
             status: false,
             error: err.message,
@@ -131,16 +131,16 @@ const removes = async (req, res) => {
     const { currentUser } = req;
     const { ids } = req.body;
     
-    const users = await User.find({_id: {$in: ids}}).catch(err => console.log(err.message));
-    users.forEach(u => {
-        if (u['logo']) {
-            if(fs.existsSync(u['logo'])) {
-                fs.unlinkSync(u['logo']);    
-            }
-        }   
-    });
+    // const users = await User.updateMany({_id: {$in: ids}}, {$set: {deleted: true}}).catch(err => console.log(err.message));
+    // users.forEach(u => {
+    //     if (u['logo']) {
+    //         if(fs.existsSync(u['logo'])) {
+    //             fs.unlinkSync(u['logo']);    
+    //         }
+    //     }   
+    // });
 
-    const result = await User.deleteMany({_id: {$in: ids}}).catch(err => {
+    const result = await User.updateMany({_id: {$in: ids}}, {$set: {deleted: true}}).catch(err => {
         return res.status(201).send({
             status: false,
             error: err.message,
@@ -336,7 +336,7 @@ const email_send_code = async (req, res) => {
 
 const check_forgot_code = async (req, res) => {
     const {email, code} = req.body;
-    const user = await User.findOne({email});
+    const user = await User.findOne({email, deleted: false});
     if(!user) {
         return res.status(400).send({
             status: false,
@@ -380,7 +380,7 @@ const check_forgot_code = async (req, res) => {
 const forgot_pwd = async(req, res) => {
     const { email } = req.body;
     // send email
-    const user = await User.findOne({email});
+    const user = await User.findOne({email, deleted: false});
     if(!user) {
         return res.status(203).send({
             status: false,
@@ -420,7 +420,7 @@ const forgot_pwd = async(req, res) => {
 
 const reset_password = async (req, res) => {
     const {email, password} = req.body;
-    const user = await User.findOne({email});
+    const user = await User.findOne({email, deleted: false});
     if(!user) {
         return res.status(400).send({
             status: false,
@@ -462,7 +462,6 @@ const block_user = async (req, res) => {
     }
     const block_user_ids = currentUser.block_user_ids || [];
     block_user_ids.push(_id);
-    console.log(block_user_ids, currentUser._id);
     const result = await User.updateOne({_id: currentUser._id}, {$set: {block_user_ids}}).catch(err =>{
         return res.status(400).send({
             status: false,

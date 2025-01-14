@@ -9,7 +9,8 @@ const ServiceSchema = new Schema(
     html: { type: String, default: ''},
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'user' },
     enabled: { type: String, default: true},
-    order: {type: Number, default: 0}
+    order: {type: Number, default: 0},
+    deleted: {type: Boolean, default: false},
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

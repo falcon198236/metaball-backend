@@ -27,7 +27,7 @@ const update = async(req, res) => {
 
 const gets = async (req, res) => {
     const { key, limit, skip } = req.query;
-    const query = {};
+    const query = {deleted: false};
     if (key)
         query.title ={$regex: `${key}.*`, $options:'i' };
     const count = await GolfAddress.countDocuments(query);
@@ -40,7 +40,7 @@ const gets = async (req, res) => {
 
 const remove = async (req, res) => {
     const { _id } = req.params;
-    const result = await GolfAddress.deleteOne({_id}).catch(err => {
+    const result = await GolfAddress.updateOne({_id, deleted: false}).catch(err => {
         return res.status(400).send({
             status: false,
             code: 400,
@@ -53,7 +53,7 @@ const remove = async (req, res) => {
 const removes = async (req, res) => {
     const { ids } = req.body;
     
-    const result = await GolfAddress.deleteMany({_id: {$in: ids}}).catch(err => {
+    const result = await GolfAddress.updateMany({_id: {$in: ids}, deleted: false}).catch(err => {
         return res.status(400).send({
             status: false,
             code: 400,
@@ -65,7 +65,7 @@ const removes = async (req, res) => {
 
 const get = async (req, res) => {
     const { _id } = req.params;
-    const golfcourse = await GolfAddress.findOne({_id}).catch(err => console.log(err.message));
+    const golfcourse = await GolfAddress.findOne({_id, deleted: false}).catch(err => console.log(err.message));
     if(!golfcourse) {
         return res.status(400).send({
             status: false,

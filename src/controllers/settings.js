@@ -56,7 +56,7 @@ const update = async(req, res) => {
 
 const gets = async (req, res) => {
     const { type, key, limit, skip } = req.query;
-    const query = {type};
+    const query = {type, deleted: false};
     if (key)
         query.title = {$regex: `${key}.*`, $options:'i' };
     const count = await Settings.countDocuments(query);
@@ -68,7 +68,7 @@ const gets = async (req, res) => {
 const remove = async (req, res) => {
     const {currentUser} = req;
     const { _id } = req.params;
-    const result = await Settings.deleteOne({_id}).catch(err => {
+    const result = await Settings.updateOne({_id}, {$set: {deleted: true}}).catch(err => {
         return res.status(400).send({
             status: false,
             error: err.message,
@@ -82,7 +82,7 @@ const removes = async (req, res) => {
     const {currentUser} = req;
     const { ids } = req.body;
     
-    const result = await Settings.deleteMany({_id: {$in: ids}}).catch(err => {
+    const result = await Settings.updateMany({_id: {$in: ids}}, {$set: {deleted: true}}).catch(err => {
         return res.status(400).send({
             status: false,
             error: err.message,
@@ -94,7 +94,7 @@ const removes = async (req, res) => {
 
 const get = async (req, res) => {
     const { _id } = req.params;
-    const settings = await Settings.findOne({_id}).catch(err => console.log(err.message));
+    const settings = await Settings.findOne({_id, deleted: false}).catch(err => console.log(err.message));
     if(!settings) {
         return res.status(400).send({
             status: false,
@@ -123,24 +123,24 @@ const activate = async(req, res) => {
 
 // it should be used on client side
 const get_type_hit = async (req, res) => {
-    const data = await Settings.find({type: SettingsType.HIT, active: true}).catch(err=>console.log(err.message));
+    const data = await Settings.find({type: SettingsType.HIT, active: true, deleted: false}).catch(err=>console.log(err.message));
     return res.send({status: true, data});
 };
 
 // user's themes
 const get_type_user_theme = async (req, res) => {
-    const data = await Settings.find({type: SettingsType.THEME}).catch(err=>console.log(err.message));
+    const data = await Settings.find({type: SettingsType.THEME, deleted: false}).catch(err=>console.log(err.message));
     return res.send({status: true, data});
 };
 
 // user's themes
 const get_type_blog_theme = async (req, res) => {
-    const data = await Settings.find({type: SettingsType.BLOG, active: true}).sort({title: 1}).catch(err=>console.log(err.message));
+    const data = await Settings.find({type: SettingsType.BLOG, active: true, deleted: false}).sort({title: 1}).catch(err=>console.log(err.message));
     return res.send({status: true, data});
 };
 
 const get_type_experience = async (req, res) => {
-    const data = await Settings.find({type: SettingsType.EXPERIENCE, active: true}).sort({title: 1}).catch(err=>console.log(err.message));
+    const data = await Settings.find({type: SettingsType.EXPERIENCE, active: true, deleted: false}).sort({title: 1}).catch(err=>console.log(err.message));
     return res.send({status: true, data});
 };
 

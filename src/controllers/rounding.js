@@ -58,7 +58,7 @@ const update = async(req, res) => {
 // get roundings 
 const gets = async (req, res) => {
     const { key, limit, skip, start_date, end_date } = req.query;
-    const query = {};
+    const query = {deleted: false};
     
     if (start_date) 
         query.opening_date = {$gte: new Date(start_date)};
@@ -84,14 +84,14 @@ const gets = async (req, res) => {
 // remove a rounding
 const remove = async (req, res) => {
     const { _id } = req.params;
-    const result = await Rounding.deleteOne({_id}).catch(err => {
+    const result = await Rounding.updateOne({_id}, {$set: {deleted: true}}).catch(err => {
         return res.status(400).send({
             status: false,
             code: 400,
             error: err.message,
         });
     });
-    RoundingMembers.deleteMany({rounding: _id}).catch(err => console.log(err));
+    // RoundingMembers.deleteMany({rounding: _id}).catch(err => console.log(err));
     return res.send({status: true, code: 200, data: result});
 };
 
@@ -99,14 +99,14 @@ const remove = async (req, res) => {
 const removes = async (req, res) => {
     const { ids } = req.body;
     
-    const result = await Rounding.deleteMany({_id: {$in: ids}}).catch(err => {
+    const result = await Rounding.updateMany({_id: {$in: ids}}, {$set: {deleted: true}}).catch(err => {
         return res.status(400).send({
             status: false,
             code: 400,
             error: err.message,
         });
     });
-    RoundingMembers.deleteMany({rounding: {$in: ids}}).catch(err => console.log(err));
+    // RoundingMembers.deleteMany({rounding: {$in: ids}}).catch(err => console.log(err));
     return res.send({status: true, code: 200, data: result});
 };
 
@@ -114,7 +114,7 @@ const removes = async (req, res) => {
 const get = async (req, res) => {
     const { currentUser } = req;
     const { _id } = req.params;
-    const rounding = await Rounding.findOne({_id})
+    const rounding = await Rounding.findOne({_id, deleted: false})
         .populate({
             path: 'user',
             select: UserHidenField
@@ -180,7 +180,7 @@ const get_mine = async (req, res) => {
     const { currentUser } = req;
     const { limit, skip } = req.query;
     const today = new Date();
-    const query = {user: currentUser._id, opening_date: {$gte: today}};
+    const query = {user: currentUser._id, opening_date: {$gte: today}, deleted: false};
     const {count, roundings} = await get_roundings_helper(query, limit, skip);
     return res.send({ 
         status: true, 
@@ -195,7 +195,9 @@ const get_mine = async (req, res) => {
 const get_range = async (req, res) => {
     const { start_date, days, sex, location, golf_themes, golf_experiences, golf_hits } = req.query;
     let date1 = moment(start_date);
-    const query = {};
+    const query = {
+        deleted: false,
+    };
     const result = [];
     if (sex) {
         query.sex = sex;
@@ -238,6 +240,7 @@ const get_date = async (req, res) => {
     const start_date = new Date(_date.setHours(0,0,0, 0));
     const end_date = new Date(_date.setHours(23,59,59, 999));
     const query = {
+            deleted: false,
             opening_date: {
             $gte: start_date,
             $lt: end_date,
@@ -275,6 +278,7 @@ const get_recent = async (req, res) => {
     const { limit, skip, } = req.query;
     const start_date = new Date();
     const query = {
+        deleted: false,
         opening_date: {
             $gte: start_date,
         }
@@ -295,7 +299,7 @@ const get_available_users = async (req, res) => {
     const {currentUser} = req;
     const {_id} = req.params;
     const {limit, skip, name, sex, address, location, start_hit, end_hit,  start_age, end_age} = req.query;
-    const rounding = await Rounding.findOne({_id}).catch(err => console.log(err.message));
+    const rounding = await Rounding.findOne({_id, deleted: false}).catch(err => console.log(err.message));
     if (!rounding) {
         return res.status(400).send({
             status: false,
@@ -343,7 +347,6 @@ const get_available_users = async (req, res) => {
     if (location) {
         query.location = location;
     }
-    console.log(query);
 
     if (start_age) {
         let age1 = moment().subtract(start_age, 'year');
@@ -375,6 +378,7 @@ const get_available_club_roundings = async (req, res) => {
     const {currentUser} = req;
     const {limit, skip} = req.params;
     const query = {
+        deleted: false,
         type: RoundingMakeType.CLUB,
         opening_date: {$gte: new Date()},
     }
@@ -409,8 +413,8 @@ const get_requested_users = async (req, res) => {
     const { _id } = req.params;
     const query = {
         rounding: _id, 
-            request_type: RequestType.REQUEST, 
-            enabled: false
+        request_type: RequestType.REQUEST, 
+        enabled: false
     }
     const count = await RoundingMembers.countDocuments(query);
     const requests = await RoundingMembers.find(query, 
@@ -447,8 +451,8 @@ const get_invited_users = async (req, res) => {
     const { _id } = req.params;
     const query = {
         rounding: _id, 
-            request_type: RequestType.INVITE, 
-            enabled: false
+        request_type: RequestType.INVITE, 
+        enabled: false
     }
     const count = await RoundingMembers.countDocuments(query);
     const invites = await RoundingMembers.find(query, 
@@ -491,7 +495,7 @@ const get_users = async (req, res) => {
         else return e.user;
     });
     
-    const query = {_id: {$in: user_ids}};
+    const query = {_id: {$in: user_ids}, deleted: false};
     const {count, users} = await get_users_helper(query, limit, skip);
     
     return res.send({
@@ -583,7 +587,7 @@ const request_list = async(req, res) => {
     const roundings_ids = _roundings_members.map((e)=>e.rounding);
     const query = {
         _id: {$in: roundings_ids},
-        opening_date: {$gte: new Date(start_date)},
+        opening_date: {$gte: new Date()},
     };
     const {count, roundings} = await get_roundings_helper(query, limit, skip);
     return res.send({
@@ -609,7 +613,7 @@ const invited_list = async(req, res) => {
     const roundings_ids = _roundings_members.map((e)=>e.rounding);
     const query = {
         _id: {$in: roundings_ids},
-        opening_date: {$gte: new Date(start_date)},
+        opening_date: {$gte: new Date()},
     };
     const {count, roundings} = await get_roundings_helper(query, limit, skip);
     return res.send({

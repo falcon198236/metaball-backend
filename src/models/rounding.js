@@ -25,6 +25,7 @@ const RoundingSchema = new Schema(
     max_members: {type: Number, default: 4},    // 募集人数
     opening_date: Date, // 開催日
     cost: Number,   // 参加費
+    deleted: {type: Boolean, default: false},
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

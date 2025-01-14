@@ -115,7 +115,7 @@ const logout = async(req, res) => {
 const gets = async (req, res) => {
     const { currentUser} = req;
     const { key, limit, skip } = req.query;
-    const query = {role: 1, _id: { $nin: [currentUser._id]}};
+    const query = {role: 1, _id: { $nin: [currentUser._id]}, deleted: false};
     if (key)
         query.email = {$regex: `${key}.*`, $options:'i' };
     
@@ -148,7 +148,7 @@ const gets = async (req, res) => {
 const remove = async (req, res) => {
     const {currentUser} = req;
     const { _id } = req.params;
-    const result = await User.deleteOne({_id}).catch(err => {
+    const result = await User.updateOne({_id, deleted: false}).catch(err => {
         return res.status(400).send({
             status: false,
             code: 400,
@@ -161,8 +161,7 @@ const remove = async (req, res) => {
 const removes = async (req, res) => {
     const {currentUser} = req;
     const { ids } = req.body;
-    console.log('removes====', req.body);
-    const result = await User.deleteMany({_id: {$in: ids}}).catch(err => {
+    const result = await User.updateMany({_id: {$in: ids}, deleted: false}).catch(err => {
         return res.status(400).send({
             status: false,
             code: 400,

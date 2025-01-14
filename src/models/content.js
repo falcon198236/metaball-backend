@@ -15,6 +15,7 @@ const ContentSchema = new Schema(
     },
     active: { type: Boolean, default: true},
     rounding: { type: mongoose.Schema.Types.ObjectId, ref: 'rounding' },
+    deleted: {type: Boolean, default: false},
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

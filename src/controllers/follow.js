@@ -93,7 +93,7 @@ const get_user_to_users = async (req, res) => {
         });
     }
 
-    const query = {_id: {$in: user.follow_user_ids}};
+    const query = {_id: {$in: user.follow_user_ids}, deleted: false};
     const {count, users} = await get_users(query, limit, skip);
     
     return res.send({
@@ -111,7 +111,7 @@ const get_user_from_users = async (req, res) => {
     const { limit, skip } = req.query; // id : user or club 'id
     const { _id } = req.params;
 
-    const query = {follow_user_ids: _id};
+    const query = {follow_user_ids: _id, deleted: false};
     const {count, users} = await get_users(query, limit, skip);
 
     return res.send({
@@ -202,7 +202,7 @@ const get_roundings = async (req, res) => {
             error: 'there is no such user',
         });
     }
-    const query = {_id: {$in: user.follow_rounding_ids}};
+    const query = {_id: {$in: user.follow_rounding_ids}, deleted: false};
     const {count, roundings} = await get_roundings_helper(query, limit, skip);
     return res.send({
         status: true,
@@ -292,8 +292,9 @@ const get_blogs = async (req, res) => {
             error: 'there is no such user',
         });
     }
-    const count = await Blog.countDocuments({_id: {$in: user.follow_blog_ids}});
-    const blogs = await Blog.find({_id: {$in: user.follow_blog_ids}})
+    const query = {_id: {$in: user.follow_blog_ids}, deleted: false };
+    const count = await Blog.countDocuments(query);
+    const blogs = await Blog.find(query)
             .populate({
                 path: 'user',
                 select: UserHidenField,

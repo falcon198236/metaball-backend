@@ -69,7 +69,7 @@ const remove = async (req, res) => {
             error: 'there is no review',
         });
     }
-    const result = await Review.deleteOne({_id}).catch(err => {
+    const result = await Review.updateOne({_id}, {$set: {deleted: true}}).catch(err => {
         return res.status(400).send({
             status: false,
             code: 400,
@@ -83,7 +83,7 @@ const remove = async (req, res) => {
 // remove the selected reviews.
 const removes = async (req, res) => {
     const { ids } = req.body;
-    const result = await Review.deleteMany({_id: {$in: ids}}).catch(err => {
+    const result = await Review.updateMany({_id: {$in: ids}}, {$set: {deleted: true}}).catch(err => {
         return res.status(400).send({
             status: false,
             code: 400,
@@ -98,7 +98,7 @@ const removes = async (req, res) => {
 // get the review information
 const get = async (req, res) => {
     const { _id } = req.params;
-    const review = await Review.findOne({_id}).catch(err => console.log(err.message));
+    const review = await Review.findOne({_id, deleted: false}).catch(err => console.log(err.message));
     if (!review) {
         return res.status(400).send({
             status: false,

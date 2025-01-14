@@ -73,22 +73,22 @@ const activate = async(req, res) => {
 
 const remove = async (req, res) => {
     const { _id } = req.params;
-    const content = await Content.findOne({_id}).catch(err=> console.log(err.message));
-    if (!content) {
-        return res.status(400).send({
-            status: false,
-            code: 400,
-            error: 'there is no content',
-        });
-    }
-    if (content['file']) {
-        const f = content['file'];
-        if(fs.existsSync(f)) {
-            fs.unlinkSync(f);    
-        }
-    }
+    // const content = await Content.findOne({_id}).catch(err=> console.log(err.message));
+    // if (!content) {
+    //     return res.status(400).send({
+    //         status: false,
+    //         code: 400,
+    //         error: 'there is no content',
+    //     });
+    // }
+    // if (content['file']) {
+    //     const f = content['file'];
+    //     if(fs.existsSync(f)) {
+    //         fs.unlinkSync(f);    
+    //     }
+    // }
     
-    const result = await Content.deleteOne({_id}).catch(err => {
+    const result = await Content.updateOne({_id}, {$set: {deleted: true}}).catch(err => {
         return res.status(400).send({
             status: false,
             code: 400,
@@ -100,16 +100,16 @@ const remove = async (req, res) => {
 
 const removes = async (req, res) => {
     const { ids } = req.body;
-    const contents = await Content.find({_id: {$in: ids}}).catch(err => console.log(err.message));
-    contents.forEach(b => {
-        if (b['file']) {
-            const f = b['file'];
-            if(fs.existsSync(f)) {
-                fs.unlinkSync(f);    
-            }
-        }   
-    })
-    const result = await Content.deleteMany({_id: {$in: ids}}).catch(err => {
+    // const contents = await Content.find({_id: {$in: ids}}).catch(err => console.log(err.message));
+    // contents.forEach(b => {
+    //     if (b['file']) {
+    //         const f = b['file'];
+    //         if(fs.existsSync(f)) {
+    //             fs.unlinkSync(f);    
+    //         }
+    //     }   
+    // })
+    const result = await Content.updateMany({_id: {$in: ids}}, {$set: {deleted: true}}).catch(err => {
         return res.status(201).send({
             status: false,
             code: 400,
@@ -122,7 +122,7 @@ const removes = async (req, res) => {
 const get = async (req, res) => {
     const { _id } = req.params;
     
-    const content = await Content.findOne({_id})
+    const content = await Content.findOne({_id, deleted: false})
         .catch(err => console.log(err.message));
     if (!content) {
         return res.status(201).send({
@@ -157,7 +157,7 @@ const gets = async (req, res) => {
             error: 'please choose `type` option',
         });
     }
-    const query = {type};
+    const query = {type, deleted: false};
     if (key)
         query.title = {$regex: `${key}.*`, $options:'i' };
     if (active !== undefined) {
@@ -177,6 +177,7 @@ const get_events = async (req, res) => {
     const query = {
         type: ContentType.EVENT,
         active: true,
+        deleted: false,
     };
     
     const count = await Content.countDocuments(query);
@@ -192,6 +193,7 @@ const get_advertising = async (req, res) => {
     const query = {
         type: ContentType.ADEVERTISING,
         active: true,
+        deleted: false
     };
     
     const count = await Content.countDocuments(query);
@@ -206,6 +208,7 @@ const get_news = async (req, res) => {
     const query = {
         type: ContentType.NEWS,
         active: true,
+        deleted: false,
     };
     
     const count = await Content.countDocuments(query);

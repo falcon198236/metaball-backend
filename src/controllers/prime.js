@@ -59,17 +59,17 @@ const update = async(req, res) => {
 const remove = async (req, res) => {
     const {currentUser} = req;
     const { _id } = req.params;
-    const prime = await Prime.findOne({_id}).catch(err=> console.log(err.message));
-    if (!prime) {
-        return {
-            status: false,
-            error: 'there is no prime',
-        };
-    }
-    const f = prime['icon'];
-    if (f && fs.existsSync(f)) fs.unlinkSync(f);    
+    // const prime = await Prime.findOne({_id}).catch(err=> console.log(err.message));
+    // if (!prime) {
+    //     return {
+    //         status: false,
+    //         error: 'there is no prime',
+    //     };
+    // }
+    // const f = prime['icon'];
+    // if (f && fs.existsSync(f)) fs.unlinkSync(f);    
 
-    const result = await Prime.deleteOne({_id}).catch(err =>{
+    const result = await Prime.updateOne({_id}, {$set: {deleted: true}}).catch(err =>{
         return res.status(400).send({
             status: false,
             error: err.message,
@@ -83,16 +83,16 @@ const remove = async (req, res) => {
 
 const removes = async (req, res) => {
     const { ids } = req.body;
-    const primes = await Prime.find({_id: {$in: ids}}).catch(err => console.log(err.message));
-    primes.forEach(b => {
-        if (b['icon']) {
-            const f = b['icon'];
-            if(fs.existsSync(f)) {
-                fs.unlinkSync(f);    
-            }
-        }   
-    })
-    const result = await Prime.deleteMany({_id: {$in: ids}}).catch(err => {
+    // const primes = await Prime.find({_id: {$in: ids}}).catch(err => console.log(err.message));
+    // primes.forEach(b => {
+    //     if (b['icon']) {
+    //         const f = b['icon'];
+    //         if(fs.existsSync(f)) {
+    //             fs.unlinkSync(f);    
+    //         }
+    //     }   
+    // })
+    const result = await Prime.updateMany({_id: {$in: ids}}, {$set: {deleted: true}}).catch(err => {
         return res.status(400).send({
             status: false,
             code: 400,
@@ -105,7 +105,7 @@ const removes = async (req, res) => {
 // get a Prime with _id
 const get = async (req, res) => {
     const { _id } = req.params;
-    const prime = await Prime.findOne({_id}).catch(err => {
+    const prime = await Prime.findOne({_id, deleted: false}).catch(err => {
         return res.status(400).send({
             status: false,
             error: err.message
@@ -121,8 +121,9 @@ const get = async (req, res) => {
 // get Primes
 const gets = async (req, res) => {
     const { _id } = req.params;
-    const count = await Prime.countDocuments();
-    const primes = await Prime.find().catch(err => {
+    const query = {deleted: false};
+    const count = await Prime.countDocuments(query);
+    const primes = await Prime.find(query).catch(err => {
         return res.status(400).send({
             status: false,
             error: err.message

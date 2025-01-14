@@ -19,6 +19,7 @@ const ClubSchema = new Schema(
     admin_selection: { type: String, default: 'owner'},
     manager_ids: [{type: mongoose.Schema.Types.ObjectId, ref: 'user'}], 
     event_ids: [{type: mongoose.Schema.Types.ObjectId, ref: 'content'}],  
+    deleted: {type: Boolean, default: false},
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

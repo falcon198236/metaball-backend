@@ -93,7 +93,7 @@ const update = async(req, res) => {
 
 const gets = async (req, res) => {
     const { key, limit, skip } = req.query;
-    const query = {};
+    const query = {deleted: false};
     if (key)
         query.name = {$regex: `${key}.*`, $options:'i' };
     const count = await Club.countDocuments(query);
@@ -127,21 +127,21 @@ const gets = async (req, res) => {
 
 const remove = async (req, res) => {
     const { _id } = req.params;
-    const club = await Club.findOne({_id}).catch(err => console.log(err.message));
-    if (!club) {
-        return res.status(400).send({
-            status: false,
-            code: 400,
-            error: 'there is no club',
-        });
-    }
+    // const club = await Club.findOne({_id}).catch(err => console.log(err.message));
+    // if (!club) {
+    //     return res.status(400).send({
+    //         status: false,
+    //         code: 400,
+    //         error: 'there is no club',
+    //     });
+    // }
 
-    if (club['logo']) {
-        if(fs.existsSync(club['logo'])) {
-            fs.unlinkSync(club['logo']);    
-        }
-    }
-    const result = await Club.deleteOne({_id}).catch(err => {
+    // if (club['logo']) {
+    //     if(fs.existsSync(club['logo'])) {
+    //         fs.unlinkSync(club['logo']);    
+    //     }
+    // }
+    const result = await Club.updateOne({_id}, {$set: {deleted: true}}).catch(err => {
         return res.status(400).send({
             status: false,
             code: 400,
@@ -154,16 +154,16 @@ const remove = async (req, res) => {
 const removes = async (req, res) => {
     const { ids } = req.body;
     
-    const clubs = await Club.find({_id: {$in: ids}}).catch(err => console.log(err.message));
-    clubs.forEach(u => {
-        if (u['logo']) {
-            if(fs.existsSync(u['logo'])) {
-                fs.unlinkSync(u['logo']);    
-            }
-        }   
-    });
+    // const clubs = await Club.find({_id: {$in: ids}}).catch(err => console.log(err.message));
+    // clubs.forEach(u => {
+    //     if (u['logo']) {
+    //         if(fs.existsSync(u['logo'])) {
+    //             fs.unlinkSync(u['logo']);    
+    //         }
+    //     }   
+    // });
 
-    const result = await Club.deleteMany({_id: {$in: ids}}).catch(err => {
+    const result = await Club.updateMany({_id: {$in: ids}}, {$set: {deleted: true}}).catch(err => {
         return res.status(400).send({
             status: false,
             code: 400,
@@ -171,14 +171,14 @@ const removes = async (req, res) => {
         });
     });
 
-    ClubMembers.deleteMany({club: {$in: ids}}).catch(err => console.log(err));
+    // ClubMembers.deleteMany({club: {$in: ids}}).catch(err => console.log(err));
     
     return res.send({status: true, code: 200, data: result});
 };
 
 const get = async (req, res) => {
     const { _id } = req.params;
-    const club = await Club.findOne({_id},
+    const club = await Club.findOne({_id, deleted: false},
             {
                 request_member_ids: 0,
                 event_ids: 0
@@ -239,7 +239,7 @@ const get = async (req, res) => {
 const get_mine = async (req, res) => {
     const { currentUser } = req;
     const { limit, skip } = req.query;
-    const query = {user: currentUser._id,};
+    const query = {user: currentUser._id, deleted: false,};
     const {count, clubs} = await get_clubs_helper(query, limit, skip);
     return res.send({
         status: true,
@@ -268,7 +268,7 @@ const get_available_users = async (req, res) => {
     const members = await ClubMembers.find({club:_id}).catch(err => console.log(err.message));
     const club_users = members.map(e => e.user);
     
-    const query = {role: 2};
+    const query = {role: 2, deleted: false};
     if (club_users.length > 0) {
         query._id = {$nin: club_users};
     }
@@ -393,7 +393,7 @@ const get_invited_users = async (req, res) => {
 const get_managers = async (req, res) => {
     const { limit, skip } = req.query;
     const { _id } = req.params;
-    const club = await Club.findOne({_id});
+    const club = await Club.findOne({_id, deleted: false});
     if(!club) {
         return res.status(400).send({
             status: false,
@@ -620,7 +620,7 @@ const get_available_clubs = async(req, res) => {
         .catch(err => console.log(err.message));
 
     const club_ids = _club_members.map((e)=>e.club);
-    const query = {_id: {$nin: club_ids}};
+    const query = {_id: {$nin: club_ids}, deleted: false};
     const {count, clubs} = await get_clubs_helper(query, limit, skip);
 
     return res.send({
@@ -644,7 +644,7 @@ const get_joined = async(req, res) => {
         .catch(err => console.log(err.message));
 
     const club_ids = _club_members.map((e)=>e.club);
-    const query = {_id: {$in: club_ids}};
+    const query = {_id: {$in: club_ids}, deleted: false};
     const {count, clubs} = await get_clubs_helper(query, limit, skip);
 
     return res.send({

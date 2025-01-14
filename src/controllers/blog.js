@@ -102,17 +102,17 @@ const remove = async (req, res) => {
 
 const removes = async (req, res) => {
     const { ids } = req.body;
-    const blogs = await Blog.find({_id: {$in: ids}}).catch(err => console.log(err.message));
-    blogs.forEach(b => {
-        if (b['files']) {
-            b['files']?.forEach(f => {
-                if(fs.existsSync(f)) {
-                    fs.unlinkSync(f);    
-                }
-            });
-        }   
-    })
-    const result = await Blog.deleteMany({_id: {$in: ids}}).catch(err => {
+    // const blogs = await Blog.find({_id: {$in: ids}}).catch(err => console.log(err.message));
+    // blogs.forEach(b => {
+    //     if (b['files']) {
+    //         b['files']?.forEach(f => {
+    //             if(fs.existsSync(f)) {
+    //                 fs.unlinkSync(f);    
+    //             }
+    //         });
+    //     }   
+    // })
+    const result = await Blog.updateMany({_id: {$in: ids}}, {$set: {deleted: true}}).catch(err => {
         return res.status(400).send({
             status: false,
             code: 400,
@@ -126,7 +126,7 @@ const removes = async (req, res) => {
 const get = async (req, res) => {
     const { currentUser } = req;
     const { _id } = req.params;
-    const query = {_id};
+    const query = {_id, deleted: false};
     const {count, blogs} = await get_blogs_helper(query, 1, 0);
 
     if (count == 0) {
@@ -152,7 +152,7 @@ const gets = async (req, res) => {
     const { _id } = req.params;
     const { key, limit, skip} = req.query;
     
-    const query = {};
+    const query = {deleted: false};
     if (key) query.title = {$regex: `${key}.*`, $options:'i' };
     const {count, blogs} = await get_blogs_helper(query, limit, skip);
     return res.send({
@@ -168,7 +168,7 @@ const gets = async (req, res) => {
 // get recent blogs
 const get_recent = async (req, res) => {
     const { limit, skip} = req.query;
-    const {count, blogs} = await get_blogs_helper({}, limit, skip, -1);
+    const {count, blogs} = await get_blogs_helper({deleted: false}, limit, skip, -1);
     return res.send({ status: true, code: 200, data: {count, blogs} });
 };
 
@@ -176,7 +176,7 @@ const get_recent = async (req, res) => {
 const get_mine = async (req, res) => {
     const { currentUser } = req;
     const { limit, skip, themes} = req.query;
-    const query = { user: currentUser._id };
+    const query = { user: currentUser._id, deleted: false };
 
     if (themes) {
         query.theme_ids = {$in: themes};
@@ -190,7 +190,7 @@ const get_user = async (req, res) => {
     const { currentUser } = req;
     const { limit, skip} = req.query;
     const { _id } = req.params;
-    const query = { user: _id };
+    const query = { user: _id, deleted: false };
     const {count, blogs} = await get_blogs_helper(query, limit, skip);
     return res.send({ status: true, code: 200, data: {count, blogs} });
 };
@@ -199,7 +199,7 @@ const get_user = async (req, res) => {
 const get_others = async (req, res) => {
     const { currentUser } = req;
     const { limit, skip, themes} = req.query;
-    const query = { user: {$ne: currentUser._id} };
+    const query = { user: {$ne: currentUser._id}, deleted: false };
     if (themes) {
         query.theme_ids = {$in: themes};
     }
@@ -211,9 +211,9 @@ const get_others = async (req, res) => {
 const get_reviewed = async (req, res) => {
     const { currentUser } = req;
     const { limit, skip, themes} = req.query;
-    const reviewes = await Review.find({user: currentUser}).catch(err=>console.log(err.message));
+    const reviewes = await Review.find({user: currentUser, deleted: false}).catch(err=>console.log(err.message));
     const blog_ids = reviewes.map(e => e.blog);
-    const query = { _id: {$in: blog_ids} };
+    const query = { _id: {$in: blog_ids}, deleted: false };
     
     if (themes) {
         query.theme_ids = {$in: themes};

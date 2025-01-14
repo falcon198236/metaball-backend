@@ -4,22 +4,22 @@ const { UserHidenField } = require('../constants/security');
 
 // remove a blog.
 const remove = async(_id) => {
-    const blog = await Blog.findOne({_id}).catch(err=> console.log(err.message));
-    if (!blog) {
-        return {
-            status: false,
-            error: 'there is no blog',
-        };
-    }
-    if (blog['files']) {
-        blog['files']?.forEach(f => {
-            if(fs.existsSync(f)) {
-                fs.unlinkSync(f);    
-            }
-        });
-    }
+    // const blog = await Blog.findOne({_id}).catch(err=> console.log(err.message));
+    // if (!blog) {
+    //     return {
+    //         status: false,
+    //         error: 'there is no blog',
+    //     };
+    // }
+    // if (blog['files']) {
+    //     blog['files']?.forEach(f => {
+    //         if(fs.existsSync(f)) {
+    //             fs.unlinkSync(f);    
+    //         }
+    //     });
+    // }
     
-    const result = await Blog.deleteOne({_id}).catch(err => {
+    const result = await Blog.updateOne({_id}, {$set: {deleted: true}}).catch(err => {
         return {
             status: false,
             error: err.message,
@@ -27,7 +27,7 @@ const remove = async(_id) => {
     });
 
     // remove reviews for this blog.
-    Blog.deleteMany({blog: blog._id}).catch(err=> console.log(err.message));
+    // Blog.deleteMany({blog: blog._id}).catch(err=> console.log(err.message));
     return {status: true, data: result};
 };
 
