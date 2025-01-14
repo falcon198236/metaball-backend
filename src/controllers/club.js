@@ -712,7 +712,8 @@ const change_owner = async(req, res) => {
             error: 'there is no such club',
         })
     });
-    const result = await Club.updateOne({_id}, {$set: {user: new_owner}});
+    const manager_ids = club.manager_ids?.filter((e) => e.toString() !== new_owner);
+    const result = await Club.updateOne({_id}, {$set: {user: new_owner, manager_ids}});
     return res.send({
         status: true,
         code: 200,
