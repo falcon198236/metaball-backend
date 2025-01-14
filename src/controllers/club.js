@@ -97,7 +97,7 @@ const gets = async (req, res) => {
     if (key)
         query.name = {$regex: `${key}.*`, $options:'i' };
     const count = await Club.countDocuments(query);
-    const clubs = await Club.find(query, {member_ids: 0, request_member_ids: 0, event_ids: 0, __v: 0})
+    const _clubs = await Club.find(query, {member_ids: 0, request_member_ids: 0, event_ids: 0, __v: 0})
         .populate({
             path: 'user',
             select: {
@@ -108,8 +108,21 @@ const gets = async (req, res) => {
         })
         .limit(limit)
         .skip(skip);
-
-    return res.send({ status: true, code: 200, data: {count, clubs} });
+    const clubs = [];
+    for(let i = 0; i < _clubs.length; i ++) {
+        const r = _clubs[i];
+        const count = await ClubMembers.countDocuments({club: r._id, enabled: true});
+        const club = {...r._doc}
+        club.member_count = count;
+        clubs.push(club);
+    };
+    return res.send({
+        status: true,
+        data: {
+            count,
+            clubs,
+        }
+    });
 };
 
 const remove = async (req, res) => {
@@ -527,7 +540,7 @@ const request_list = async(req, res) => {
             count,
             clubs,
         }
-    })
+    });
 };
 
 // get the clubs I was invited.
