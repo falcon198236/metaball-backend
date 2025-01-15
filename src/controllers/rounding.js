@@ -157,8 +157,9 @@ const get = async (req, res) => {
     let invited_id, requested_id;
     idx = request_users.findIndex(e => e.user._id.toString() === currentUser._id.toString());
     if(idx > -1) requested_id = request_users[idx]._id;
-    idx = invited_users.findIndex(e => e.user._id.toString() === currentUser._id.toString());
+    idx = invited_users.findIndex(e => e.toUser.toString() === currentUser._id.toString());
     if(idx > -1) invited_id = invited_users[idx]._id;
+    
     const is_followed = currentUser.follow_rounding_ids.findIndex(e => e.toString() === rounding._id.toString()) > -1?true:false;
     return res.send({
         status: true,
