@@ -24,6 +24,7 @@
     "formidable": "^3.5.1",
     "google-auth-library": "^9.15.0",
     "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
     "mailersend": "^2.3.0",
     "mailgun-js": "^0.22.0",
     "moment": "^2.30.1",

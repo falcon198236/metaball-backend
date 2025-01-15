@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const moment = require('moment')
 const mongoose = require('mongoose');
 const Rounding = require('../models/rounding');
@@ -597,7 +598,7 @@ const request_list = async(req, res) => {
             count,
             roundings,
         }
-    })
+    });
 };
 
 // get the roundings I was invited.
@@ -623,8 +624,40 @@ const invited_list = async(req, res) => {
             count,
             roundings,
         }
-    })
+    });
 };
+
+// get the roundings I was as Member
+const joined_list = async(req, res) => {
+    const { currentUser } = req; // currentUser is a general user
+    const {limit, skip} = req.query;
+    const _roundings_members = await RoundingMembers.find({
+            $or: [
+                {user: currentUser._id},
+                {toUser: currentUser._id},
+            ],
+            enabled: true,
+            
+        })
+        .catch(err => console.log(err.message));
+
+    const _roundings_ids = _roundings_members.map((e)=>e.rounding);
+    const roundings_ids = _.uniqBy(_roundings_ids);
+    console.log(_roundings_ids);
+    console.log(roundings_ids);
+    const query = {
+        _id: {$in: roundings_ids},
+        opening_date: {$gte: new Date()},
+    };
+    const {count, roundings} = await get_roundings_helper(query, limit, skip);
+    return res.send({
+        status: true,
+        data: {
+            count,
+            roundings,
+        }
+    })
+}
 
 // user allow the request from the owner or user.
 const allow_request = async(req, res) => {
@@ -696,6 +729,7 @@ module.exports = {
 
     request_list,
     invited_list,
+    joined_list,
     request,
     invite_users,
     invite_user,
