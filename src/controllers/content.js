@@ -183,6 +183,7 @@ const get_events = async (req, res) => {
     const count = await Content.countDocuments(query);
     const contents = await Content.find(query)
         .populate('rounding')
+        .sort({created_at: -1})
         .limit(limit)
         .skip(skip)
     return res.send({ status: true, code: 200, data: {count, contents} });
@@ -198,6 +199,7 @@ const get_advertising = async (req, res) => {
     
     const count = await Content.countDocuments(query);
     const contents = await Content.find(query)
+        .sort({created_at: -1})
         .limit(limit)
         .skip(skip)
     return res.send({ status: true, code: 200, data: {count, contents} });
@@ -213,6 +215,7 @@ const get_news = async (req, res) => {
     
     const count = await Content.countDocuments(query);
     const contents = await Content.find(query)
+        .sort({created_at: -1})
         .limit(limit)
         .skip(skip)
     return res.send({ status: true, code: 200, data: {count, contents} });
