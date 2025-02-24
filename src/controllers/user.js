@@ -76,9 +76,9 @@ const update = async(req, res) => {
         req.body['logo'] = _files[0];
     }
     const result = await User.updateOne({_id}, {$set: req.body}).catch((err) => {
-        return res.status(203).send({
+        return res.status(400).send({
             status: false,
-            code: 203,
+            code: 400,
             error: err.message,
         })
     });
@@ -195,6 +195,7 @@ const login = async(req, res) => {
         return res.status(201).send({
             status: false,
             error: 'there is no such user.',
+            code: 201
         });
     }
     const hash = crypto
@@ -204,6 +205,7 @@ const login = async(req, res) => {
         return res.status(202).send({
             status: false,
             error: 'Invalid password.',
+            code: 202
         });
     }
     const payload = {
@@ -224,6 +226,7 @@ const login = async(req, res) => {
         data: {
             token,
             user: _user,
+            code: 200
         }
     })
 };
@@ -243,7 +246,8 @@ const me = async (req, res) => {
     if (!status) {
         return res.status(400).send({
             status,
-            error: 'there is no such user'
+            error: 'there is no such user',
+            code: 400
         })
     }
     return res.send({
@@ -258,9 +262,10 @@ const profile = async (req, res) => {
     const { _id } = req.params;
     const {status, profile} = await get_profile(_id);
     if (!status) {
-        return res.status(400).send({
+        return res.status(203).send({
             status,
-            error: 'there is no such user'
+            error: 'there is no such user',
+            code: 203,
         })
     }
 
@@ -285,9 +290,10 @@ const change_password = async (req, res) => {
         .pbkdf2Sync(old_pwd, currentUser.salt, 10000, 512, 'sha512')
         .toString('hex');
     if(old_hash !== currentUser.hash) {
-        return res.status(202).send({
+        return res.status(208).send({
             status: false,
             error: 'Invalid old password.',
+            code: 208,
         });
     }
     const {status, error} = await change_password_helper(currentUser._id, new_pwd);
@@ -295,10 +301,12 @@ const change_password = async (req, res) => {
         return res.status(400).send({
             status: false,
             error,
+            code: 400,
         })
     
     return res.send({
         status: true,
+        code: 200,
     });
 };
 
@@ -422,9 +430,9 @@ const reset_password = async (req, res) => {
     const {email, password} = req.body;
     const user = await User.findOne({email, deleted: false});
     if(!user) {
-        return res.status(400).send({
+        return res.status(203).send({
             status: false,
-            code: 400,
+            code: 203,
             error: 'there is no user',
         })
     }
@@ -446,17 +454,17 @@ const block_user = async (req, res) => {
     const {_id} = req.body;
     const user = await User.findOne({_id});
     if (!user) {
-        return res.status(400).send({
+        return res.status(203).send({
             status: false,
-            code: 400,
+            code: 203,
             error: 'there is no user',
         });
     }
     const index = currentUser.block_user_ids?.findIndex(e => e.toString() === _id);
     if(index > -1) {
-        return res.status(400).send({
+        return res.status(205).send({
             status: false,
-            code: 400,
+            code: 205,
             error: 'this user already was blocked',
         })
     }
@@ -481,9 +489,9 @@ const unblock_user = async (req, res) => {
     const {_id} = req.body;
     const user = await User.findOne({_id});
     if (!user) {
-        return res.status(400).send({
+        return res.status(203).send({
             status: false,
-            code: 400,
+            code: 203,
             error: 'there is no user',
         });
     }

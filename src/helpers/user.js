@@ -10,14 +10,14 @@ const { UserHidenField } = require('../constants/security');
 const create = async(data) => {
     const {email, password} = data;
     if (!email) {
-        return { status: false, code: 202, error: 'invalid email.'};
+        return { status: false, code: 204, error: 'invalid email.'};
     }
     if (!password) {
-        return { status: false, code: 202, error: 'empty password.'};
+        return { status: false, code: 206, error: 'empty password.'};
     }
     const _user = await User.findOne({email}).catch(() => {});
     if(_user) {
-        return {status: false, code: 203, error: 'the user is already exists.'};
+        return {status: false, code: 207, error: 'the user is already exists.'};
     }
 
     const salt = crypto.randomBytes(16).toString('hex');
