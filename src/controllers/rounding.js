@@ -590,6 +590,7 @@ const request_list = async(req, res) => {
     const query = {
         _id: {$in: roundings_ids},
         opening_date: {$gte: new Date()},
+        deleted: false,
     };
     const {count, roundings} = await get_roundings_helper(query, limit, skip);
     return res.send({
@@ -636,6 +637,7 @@ const joined_list = async(req, res) => {
                 {user: currentUser._id},
                 {toUser: currentUser._id},
             ],
+            deleted: false,
             enabled: true,
             
         })
@@ -648,6 +650,7 @@ const joined_list = async(req, res) => {
     const query = {
         _id: {$in: roundings_ids},
         opening_date: {$gte: new Date()},
+        deleted: false,
     };
     const {count, roundings} = await get_roundings_helper(query, limit, skip);
     return res.send({
