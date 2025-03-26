@@ -9,6 +9,7 @@ const { checkListParam } = require('../middleware/params');
 const router = express.Router();
 
 router.get('/', catchError(user.me));
+router.delete('/:_id', catchError(user.remove));
 router.get('/:_id', catchError(user.profile));
 
 router.put('/', upload.array('files', 1), correctBody, catchError(user.update));
