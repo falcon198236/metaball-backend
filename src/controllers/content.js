@@ -4,6 +4,7 @@ const { SystemActionType, ContentType } = require('../constants/type');
 const { 
     get_roundings: get_roundings_helper, 
 } = require('../helpers/rounding');
+const Rounding = require('../models/rounding');
 
 
 const SECTION = 'content';
@@ -189,6 +190,32 @@ const get_events = async (req, res) => {
     return res.send({ status: true, code: 200, data: {count, contents} });
 };
 
+const get_events_club = async (req, res) => {
+    const { limit, skip} = req.query;
+    const { _id: club_id } = req.params;
+    const roundings = await Rounding.find({
+        club: club_id,
+        opening_date: {$gte: new Date()},
+    });
+    const rounding_ids = roundings?.map(r => r._id);
+    console.log(rounding_ids);
+    const query = {
+        type: ContentType.EVENT,
+        rounding: {$in: rounding_ids},
+        active: true,
+        deleted: false,
+    };
+    
+    const count = await Content.countDocuments(query);
+    const contents = await Content.find(query)
+        .populate('rounding')
+        .sort({created_at: -1})
+        .limit(limit)
+        .skip(skip)
+    return res.send({ status: true, code: 200, data: {count, contents} });
+};
+
+
 const get_advertising = async (req, res) => {
     const { limit, skip} = req.query;
     const query = {
@@ -232,6 +259,7 @@ module.exports = {
     activate,
 
     get_events,
+    get_events_club,
     get_advertising,
     get_news,
 }
