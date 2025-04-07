@@ -582,7 +582,7 @@ const request_list = async(req, res) => {
     const {limit, skip} = req.query;
     const _roundings_members = await RoundingMembers.find({
             user: currentUser._id, 
-            enabled: false,
+            // enabled: false,
             request_type: RequestType.REQUEST,    
         })
         .catch(err => console.log(err.message));
@@ -608,7 +608,7 @@ const invited_list = async(req, res) => {
     const {limit, skip} = req.query;
     const _roundings_members = await RoundingMembers.find({
             toUser: currentUser._id, 
-            enabled: false,
+            // enabled: false,
             request_type: RequestType.INVITE,
         })
         .catch(err => console.log(err.message));
