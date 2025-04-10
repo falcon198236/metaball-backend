@@ -121,7 +121,12 @@ const get = async (req, res) => {
 // get Primes
 const gets = async (req, res) => {
     const { _id } = req.params;
+    const { key } = req.query;
     const query = {deleted: false};
+    
+    if (key) {
+        query['title'] = key;
+    }
     const count = await Prime.countDocuments(query);
     const primes = await Prime.find(query).catch(err => {
         return res.status(400).send({

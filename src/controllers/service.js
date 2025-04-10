@@ -122,7 +122,11 @@ const get = async (req, res) => {
 // get services
 const gets = async (req, res) => {
     const { _id } = req.params;
+    const { key } = req.query;
     const query = {deleted: false};
+    if (key) {
+        query['title'] = key;
+    }
     const count = await Service.countDocuments(query);
     const services = await Service.find(query).catch(err => {
         return res.status(400).send({
