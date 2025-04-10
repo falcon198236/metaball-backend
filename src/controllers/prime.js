@@ -125,7 +125,7 @@ const gets = async (req, res) => {
     const query = {deleted: false};
     
     if (key) {
-        query['title'] = key;
+        query.title = {$regex: `${key}.*`, $options:'i' };
     }
     const count = await Prime.countDocuments(query);
     const primes = await Prime.find(query).catch(err => {

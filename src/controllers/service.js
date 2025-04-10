@@ -125,7 +125,7 @@ const gets = async (req, res) => {
     const { key } = req.query;
     const query = {deleted: false};
     if (key) {
-        query['title'] = key;
+        query.title = {$regex: `${key}.*`, $options:'i' };
     }
     const count = await Service.countDocuments(query);
     const services = await Service.find(query).catch(err => {
